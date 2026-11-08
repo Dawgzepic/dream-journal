@@ -1,4 +1,5 @@
 import { promptSymbols } from './analyze.js'
+import { detailReadingBits } from './details.js'
 
 const NOTE = 'This is a reflection from your own words, not a verdict and not a prediction.'
 
@@ -249,12 +250,14 @@ function scenes(symbols, arcs) {
 
 function finish(dream, detailed, scene) {
   const extra = contextSentences(dream, detailed)
+  const detail = detailReadingBits(dream).join(' ')
   const end = `Putting it together: ${scene.takeaway} ${scene.question}`
   if (!detailed) {
     const bit = extra[0] ? ` ${extra[0]}` : ''
-    return [`${scene.psych}${bit} ${scene.folkShort} ${end}`, NOTE]
+    const sensed = detail ? ` ${detail}` : ''
+    return [`${scene.psych}${bit}${sensed} ${scene.folkShort} ${end}`, NOTE]
   }
-  const psych = [scene.psych, ...extra.slice(0, 2)].filter(Boolean).join(' ')
+  const psych = [scene.psych, ...extra.slice(0, 2), detail].filter(Boolean).join(' ')
   return [psych, scene.folk, end, NOTE]
 }
 

@@ -1,5 +1,6 @@
 import { deleteDream } from '../db.js'
 import { screenLabel } from '../lib/constants.js'
+import { detailSummaryLines } from '../lib/details.js'
 import { displayTitle } from '../lib/dreams.js'
 import { formatWhen } from '../lib/format.js'
 import { go } from '../runtime.js'
@@ -18,6 +19,7 @@ export function mountDream(root, route) {
   if (bed.substance) bedBits.push(`Caffeine or alcohol: ${bed.substance}`)
   if (bed.stress) bedBits.push(`Stress: ${bed.stress} of 5`)
   if (bed.screen) bedBits.push(`Screen time: ${screenLabel(bed.screen)}`)
+  const detailLines = detailSummaryLines(dream)
   root.innerHTML = `<div class="page">
     <a class="back" href="#/journal">Back to journal</a>
     ${dream.isSample ? '<p class="sample-note" data-testid="sample-banner">This is a sample dream, here so the journal is not empty on the first night. You can delete it.</p>' : ''}
@@ -33,8 +35,10 @@ export function mountDream(root, route) {
     <article class="prose">${esc(dream.story || '').replaceAll('\n', '<br>')}</article>
     ${dream.events ? `<section class="card"><h2>Linked to waking life</h2><p>${esc(dream.events)}</p></section>` : ''}
     ${bedBits.length ? `<section class="card"><h2>Before bed</h2><p>${bedBits.map(esc).join('<br>')}</p></section>` : ''}
+    ${detailLines.length ? `<section class="card" data-testid="dream-details"><h2>Details</h2><p>${detailLines.map(esc).join('<br>')}</p></section>` : ''}
     <div class="row wrap">
       <a class="btn primary" href="#/dream/${esc(dream.id)}/meaning" data-testid="open-meaning">Meanings</a>
+      <a class="btn secondary" href="#/dream/${esc(dream.id)}/details" data-testid="add-details">${detailLines.length ? 'Edit details' : 'Add details'}</a>
       <a class="btn secondary" href="#/edit/${esc(dream.id)}">Edit</a>
       <button type="button" class="btn danger" data-testid="delete-dream">Delete</button>
     </div>

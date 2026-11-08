@@ -1,4 +1,5 @@
 import { CLARITY, SUBSTANCES, SCREENS } from './constants.js'
+import { cleanDetails } from './details.js'
 import { cleanLabel, uid } from './format.js'
 
 const SUBSTANCE_IDS = new Set(SUBSTANCES.map((item) => item.id))
@@ -21,6 +22,7 @@ export function blankDream() {
     events: '',
     tags: [],
     bedtime: { food: '', substance: '', stress: null, screen: '' },
+    details: {},
     isDraft: true,
     isSample: false,
     createdAt: now,
@@ -100,6 +102,7 @@ export function normalizeDream(raw) {
       stress: stress >= 1 && stress <= 5 ? Math.round(stress) : null,
       screen
     },
+    details: cleanDetails(raw.details),
     isDraft: Boolean(raw.isDraft),
     isSample: Boolean(raw.isSample),
     createdAt: typeof raw.createdAt === 'string' ? raw.createdAt : now,

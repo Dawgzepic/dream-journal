@@ -1,4 +1,5 @@
 import { symbolCounts } from '../lib/analyze.js'
+import { odditySigns } from '../lib/details.js'
 import { userDreams } from '../lib/dreams.js'
 import { state } from '../state.js'
 import { esc } from '../ui.js'
@@ -8,6 +9,7 @@ export function mountLucid(root) {
   const lucid = own.filter((dream) => (dream.tags || []).includes('Lucid'))
   const counts = symbolCounts(state.dreams)
   const signs = counts.filter((row) => row.count >= 2).slice(0, 6)
+  const oddities = odditySigns(state.dreams)
   const emerging = counts.filter((row) => row.count === 1).slice(0, 4)
   root.innerHTML = `<div class="page">
     <p class="brand-mobile eyebrow">Dream Journal</p>
@@ -22,6 +24,7 @@ export function mountLucid(root) {
       <h2>Your dream signs</h2>
       <p>A dream sign is an image that shows up often enough to become a cue. When it appears during the day, do a reality check. When it appears in a dream, it can remind you that you are asleep.</p>
       ${signs.length ? `<ul class="sign-list" data-testid="dream-signs">${signs.map((row) => `<li><strong>${esc(row.symbol.name)}</strong> in ${row.count} dreams</li>`).join('')}</ul>` : '<p class="muted" data-testid="dream-signs">As you log dreams, symbols that repeat will be listed here.</p>'}
+      ${oddities.length ? `<p>Oddities you noted, useful as dream signs:</p><ul class="sign-list" data-testid="oddity-signs">${oddities.map((line) => `<li>${esc(line)}</li>`).join('')}</ul>` : ''}
       ${emerging.length ? `<p class="muted">Showing up once so far: ${esc(emerging.map((row) => row.symbol.name.toLowerCase()).join(', '))}.</p>` : ''}
     </section>
     <section class="card">

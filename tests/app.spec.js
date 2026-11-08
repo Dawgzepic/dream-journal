@@ -53,6 +53,8 @@ async function saveFull(page, dream) {
   if (dream.substance) await page.getByTestId(`substance-${dream.substance}`).click()
   if (dream.screen) await page.getByTestId(`screen-${dream.screen}`).click()
   await page.getByTestId('save-dream').click()
+  await expect(page.getByRole('heading', { name: 'Dream details' })).toBeVisible()
+  await page.getByTestId('skip-details').click()
   await expect(page.getByTestId('dream-title-view')).toHaveText(dream.title)
 }
 
@@ -99,6 +101,9 @@ test('journal flow, exports, and mobile screens', async ({ page }) => {
   await page.evaluate(() => window.scrollTo(0, 0))
   await page.screenshot({ path: path.join(artifacts, 'new-entry.png'), animations: 'disabled' })
   await page.getByTestId('save-dream').click()
+  await expect(page.getByRole('heading', { name: 'Dream details' })).toBeVisible()
+  await expect(page.getByTestId('detail-time')).toBeVisible()
+  await page.getByTestId('skip-details').click()
   await expect(page.getByTestId('dream-title-view')).toHaveText('Glass station')
 
   await page.reload()

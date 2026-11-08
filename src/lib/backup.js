@@ -1,4 +1,5 @@
 import { screenLabel } from './constants.js'
+import { detailSummaryLines } from './details.js'
 import { normalizeDream } from './dreams.js'
 import { formatWhen, dayKey } from './format.js'
 
@@ -31,6 +32,11 @@ export function journalToText(dreams) {
     if (bed.stress) bits.push(`stress: ${bed.stress} of 5`)
     if (bed.screen) bits.push(`screen: ${screenLabel(bed.screen)}`)
     if (bits.length) parts.push(`Before bed: ${bits.join('; ')}`)
+    const detailLines = detailSummaryLines(dream)
+    if (detailLines.length) {
+      parts.push('Details:')
+      for (const line of detailLines) parts.push(line)
+    }
     parts.push('')
     parts.push(dream.story || '')
     parts.push('')
@@ -178,6 +184,11 @@ export async function downloadPdf(dreams) {
     if (dream.clarity) write(`Memory: ${dream.clarity}`)
     if (dream.tags?.length) write(`Labels: ${dream.tags.join(', ')}`)
     if (dream.events) write(`Linked events: ${dream.events}`)
+    const detailLines = detailSummaryLines(dream)
+    if (detailLines.length) {
+      write('Details:')
+      for (const line of detailLines) write(line)
+    }
     write(dream.story || '')
   }
   doc.save(`dream-journal-${dayKey(new Date())}.pdf`)

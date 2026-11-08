@@ -245,6 +245,8 @@ textarea { min-height: 160px; resize: vertical; line-height: 1.55; }
 .link-card { display: block; text-decoration: none; color: inherit; }
 .prompt-line { border-left: 2px solid var(--gold); padding-left: 12px; font-style: italic; }
 .paste-note { color: var(--gold); }
+.detail-q h2 { font-size: 1.25rem; margin-top: 0; }
+.detail-q .text-link { margin-bottom: 8px; }
 .reading p { margin-top: 0; }
 .reading strong { color: var(--gold); font-weight: 560; }
 details.symbol-notes { padding-top: 8px; }

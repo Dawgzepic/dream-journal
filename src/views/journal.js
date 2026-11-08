@@ -1,3 +1,4 @@
+import { detailSummaryLines } from '../lib/details.js'
 import { displayTitle } from '../lib/dreams.js'
 import { recurringIdSet } from '../lib/analyze.js'
 import { excerpt, formatDay, monthKeyFromDate, monthLabel } from '../lib/format.js'
@@ -9,7 +10,8 @@ function matches(dream, query) {
   const bed = dream.bedtime || {}
   const hay = [
     dream.title, dream.story, dream.events, dream.clarity, dream.moodAfter,
-    ...(dream.moodsDuring || []), ...(dream.tags || []), bed.food, bed.substance, bed.screen
+    ...(dream.moodsDuring || []), ...(dream.tags || []), bed.food, bed.substance, bed.screen,
+    detailSummaryLines(dream).join(' ')
   ].join(' ').toLowerCase()
   return query.toLowerCase().split(/\s+/).filter(Boolean).every((word) => hay.includes(word))
 }

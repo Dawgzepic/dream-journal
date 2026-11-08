@@ -1,14 +1,15 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { bedtimeBuckets, findSymbols, recurringGroups, uniqueSymbols } from '../src/lib/analyze.js'
-import { parseBackup, journalToText } from '../src/lib/backup.js'
+import { parseBackup, journalToJSON, journalToText } from '../src/lib/backup.js'
+import { selectQuestions, detailSummaryLines, odditySigns } from '../src/lib/details.js'
 import { defaultSettings } from '../src/lib/constants.js'
 import { blankDream, normalizeDream, userDreams } from '../src/lib/dreams.js'
 import { hashPin, randomSalt, verifyPin } from '../src/lib/pin.js'
 import { sampleDream } from '../src/lib/sample.js'
 import { SYMBOLS } from '../src/lib/symbols.js'
 import { currentStreak, greeting, isQuietHours, isWorkTime, nextRealityDelay } from '../src/lib/time.js'
-import { interpretationPrompt } from '../src/lib/ai.js'
+import { imagePrompt, interpretationPrompt } from '../src/lib/ai.js'
 import { fullInterpretation } from '../src/lib/interpret.js'
 
 test('dictionary has 150 distinct symbols with both readings', () => {
@@ -238,6 +239,70 @@ test('a thin dream still gets a gentle reading from the mood', () => {
   assert.match(text, /Putting it together/)
   assert.match(text, /reflection/)
   assert.equal(/train/i.test(text), false)
+})
+
+const CARS = 'Cars in a park were crashing into each other while people argued and shouted. I escaped through the trees before another one could reach me.'
+
+test('questions follow the train ride and the cars in the park', () => {
+  const train = selectQuestions(`Train Ride\n${TRAIN_RIDE}`).map((question) => question.id)
+  assert.ok(train.length >= 5 && train.length <= 7, train.join(','))
+  assert.equal(train[0], 'time')
+  assert.equal(train[1], 'setting')
+  assert.ok(train.includes('heading'))
+  assert.equal(train.includes('reminded'), false)
+  assert.equal(train.includes('before'), false)
+  const cars = selectQuestions(`Cars in a Park\n${CARS}`).map((question) => question.id)
+  assert.ok(cars.length >= 5 && cars.length <= 7, cars.join(','))
+  assert.ok(cars.includes('time'))
+  assert.ok(cars.includes('setting'))
+  assert.ok(cars.includes('heading'))
+  assert.ok(cars.includes('reminded'))
+  assert.ok(cars.includes('before'))
+  const long = selectQuestions(`Long\n${'I walked the road and looked around. '.repeat(40)}`)
+  assert.ok(long.length > 7 && long.length <= 10)
+  assert.ok(long.some((question) => question.id === 'time'))
+  assert.ok(long.some((question) => question.id === 'setting'))
+})
+
+test('details survive text and json export and an old entry still opens', () => {
+  const dream = {
+    ...blankDream(),
+    id: 'train-1',
+    title: 'Train Ride',
+    story: TRAIN_RIDE,
+    isDraft: false,
+    events: 'Work ran long.',
+    details: {
+      time: { choices: ['Night'], note: '' },
+      setting: { choices: ['Vehicle'], note: 'on a boxcar' },
+      odd: { choices: ['Yes'], note: 'a train that would not let me off' },
+      ignored: { choices: ['Nope'], note: 'drop me' }
+    }
+  }
+  const text = journalToText([dream])
+  assert.match(text, /Time of day: Night/)
+  assert.match(text, /on a boxcar/)
+  const raw = journalToJSON(defaultSettings(), [dream])
+  const parsed = parseBackup(raw)
+  assert.deepEqual(parsed.dreams[0].details.time, { choices: ['Night'], note: '' })
+  assert.deepEqual(parsed.dreams[0].details.setting, { choices: ['Vehicle'], note: 'on a boxcar' })
+  assert.equal(parsed.dreams[0].details.ignored, undefined)
+  assert.equal(parsed.dreams[0].title, 'Train Ride')
+  const old = parseBackup(JSON.stringify({ app: 'Dream Journal', version: 1, dreams: [{ id: 'old', title: 'Old night', story: 'I slept.' }] }))
+  assert.deepEqual(old.dreams[0].details, {})
+  assert.equal(old.dreams[0].title, 'Old night')
+  assert.equal(journalToText(old.dreams).includes('Details:'), false)
+  const reading = fullInterpretation(dream, 'detailed')
+  assert.match(reading, /night/i)
+  assert.match(reading, /vehicle/i)
+  assert.match(reading, /boxcar/i)
+  assert.match(reading, /Putting it together/)
+  const prompt = interpretationPrompt(dream, 'short', [])
+  assert.match(prompt, /Time of day: Night/)
+  assert.match(prompt, /Setting: Vehicle, on a boxcar/)
+  assert.match(imagePrompt(dream), /Time of day: Night/)
+  assert.deepEqual(odditySigns([dream, { ...dream, id: 'sample', isSample: true }]), ['a train that would not let me off'])
+  assert.match(detailSummaryLines(dream).join('\n'), /Anything odd: Yes/)
 })
 
 test('bedtime buckets count nightmares', () => {

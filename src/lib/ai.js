@@ -1,4 +1,5 @@
 import { screenLabel } from './constants.js'
+import { detailCueLines } from './details.js'
 import { firstSentence, formatWhen } from './format.js'
 
 const DEPTH_WORDS = {
@@ -32,6 +33,8 @@ export function interpretationPrompt(dream, depth, symbols) {
   if (bed.stress) bits.push(`stress: ${bed.stress} of 5`)
   if (bed.screen) bits.push(`screen time: ${screenLabel(bed.screen)}`)
   if (bits.length) lines.push(`Bedtime: ${bits.join('; ')}`)
+  const cues = detailCueLines(dream)
+  if (cues.length) lines.push(...cues)
   lines.push('', 'Dream:', dream.story || '')
   const notes = (symbols || []).slice(0, 5)
   if (notes.length) {
@@ -52,6 +55,7 @@ export function imagePrompt(dream) {
     'Create one painterly illustration of this dream. No words, no letters, no watermark, no signature.',
     'Style: dark indigo night, soft moonlight, a little film grain, gentle and dignified.',
     moods.length ? `Mood to convey: ${moods.join(', ')}.` : '',
+    ...detailCueLines(dream).map((line) => `${line}.`),
     dream.tags?.includes('Nightmare')
       ? 'The scene may be unsettling, but do not use gore.'
       : 'Keep the image calm enough to look at in the morning.',

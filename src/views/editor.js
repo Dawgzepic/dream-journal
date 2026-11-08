@@ -89,6 +89,7 @@ export function mountEditor(root, route) {
       <div class="savebar">
         <button type="submit" class="btn primary" data-testid="save-dream">Save dream</button>
         <button type="button" class="btn primary" data-testid="save-jot">Save jot</button>
+        ${existing ? `<button type="button" class="btn secondary" data-testid="open-details">Add details</button>` : ''}
         <p class="save-status" data-testid="save-status" aria-live="polite"></p>
       </div>
     </form>
@@ -351,6 +352,19 @@ export function mountEditor(root, route) {
     await publish()
   })
   saveJotBtn.addEventListener('click', () => saveJot())
+  root.querySelector('[data-testid="open-details"]')?.addEventListener('click', async () => {
+    if (!working.story.trim()) {
+      setError('Write a few words first.')
+      story.focus()
+      return
+    }
+    if (!working.title.trim()) working.title = titleFrom(working.story)
+    title.value = working.title
+    working.datetime = fromLocalInput(when.value)
+    dirty = true
+    await flush()
+    go(`#/dream/${working.id}/details`)
+  })
 
   async function publish() {
     if (!working.story.trim()) {
@@ -361,12 +375,13 @@ export function mountEditor(root, route) {
     if (!working.title.trim()) working.title = titleFrom(working.story)
     title.value = working.title
     working.datetime = fromLocalInput(when.value)
+    const firstPublish = !wasPublished
     wasPublished = true
     working.isDraft = false
     dirty = true
     await flush()
     toast('Dream saved')
-    go(`#/dream/${working.id}`)
+    go(firstPublish ? `#/dream/${working.id}/details` : `#/dream/${working.id}`)
   }
   async function saveJot() {
     if (working.story.trim().length < 3) {

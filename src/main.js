@@ -8,6 +8,7 @@ import { stopReminders } from './reminders.js'
 import { runtime } from './runtime.js'
 import { state } from './state.js'
 import { icon, mountStars } from './ui.js'
+import { mountDetails } from './views/details.js'
 import { mountDream } from './views/dream.js'
 import { mountEditor } from './views/editor.js'
 import { mountHome } from './views/home.js'
@@ -24,6 +25,7 @@ const titles = {
   editor: 'New dream · Dream Journal',
   dream: 'Dream · Dream Journal',
   meaning: 'Meanings · Dream Journal',
+  details: 'Dream details · Dream Journal',
   patterns: 'Patterns · Dream Journal',
   lucid: 'Lucid dreaming · Dream Journal',
   settings: 'Settings · Dream Journal'
@@ -43,7 +45,7 @@ function shell() {
 }
 
 function navKey(name) {
-  if (name === 'dream' || name === 'editor' || name === 'meaning') return 'journal'
+  if (name === 'dream' || name === 'editor' || name === 'meaning' || name === 'details') return 'journal'
   return name
 }
 
@@ -93,6 +95,7 @@ function render() {
       journal: mountJournal,
       editor: mountEditor,
       dream: mountDream,
+      details: mountDetails,
       meaning: mountMeaning,
       patterns: mountPatterns,
       lucid: mountLucid,
