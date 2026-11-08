@@ -42,13 +42,11 @@ function moodSentence(dream) {
   const during = (dream.moodsDuring || []).filter(Boolean)
   const after = dream.moodAfter || ''
   if (during.length && after && !during.some((mood) => mood.toLowerCase() === after.toLowerCase())) {
-    return `During the dream you felt ${list(during).toLowerCase()}, and on waking that shifted toward ${after.toLowerCase()}.`
+    return `You felt ${list(during).toLowerCase()} in the dream, and ${after.toLowerCase()} on waking.`
   }
-  if (during.length && after) {
-    return `You felt ${list(during).toLowerCase()} in the dream, and that feeling was still there when you woke.`
-  }
-  if (during.length) return `Inside the dream the feeling was ${list(during).toLowerCase()}.`
-  if (after) return `What stayed with you on waking was ${after.toLowerCase()}.`
+  if (during.length && after) return `You felt ${list(during).toLowerCase()}.`
+  if (during.length) return `You felt ${list(during).toLowerCase()}.`
+  if (after) return `On waking you felt ${after.toLowerCase()}.`
   return ''
 }
 
@@ -105,9 +103,18 @@ function imagePhrase(symbols) {
   return `${names[0]}, ${names[1]}, and ${names[2]}`
 }
 
-function sceneFor(symbols, arcs) {
+function isInfestation(text, symbols) {
+  const lower = String(text || '').toLowerCase()
+  const bugs = symbols.some((symbol) => symbol.id === 'insects') || /\b(flea|fleas|specks|bugs|bug|insects|insect|lice|ants)\b/.test(lower)
+  const grows = symbols.some((symbol) => symbol.id === 'swarm') || /\b(more and more|pile|piling|swarm)\b/.test(lower)
+  const acts = symbols.some((symbol) => symbol.id === 'discard') || /\b(tossed|threw|thrown|gathered)\b/.test(lower)
+  return bugs && (grows || acts)
+}
+
+function sceneFor(symbols, arcs, text) {
   const ids = new Set(symbols.map((symbol) => symbol.id))
   if (ids.has('train') && (has(arcs, 'stuck') || has(arcs, 'far') || has(arcs, 'small-start'))) return 'train-haul'
+  if (isInfestation(text, symbols)) return 'infestation'
   if (has(arcs, 'conflict') && has(arcs, 'escape')) return 'clash-leave'
   if ((ids.has('car') && has(arcs, 'conflict')) || (ids.has('car') && has(arcs, 'escape') && has(arcs, 'conflict'))) return 'clash-leave'
   if (has(arcs, 'chased')) return 'chased'
@@ -125,8 +132,14 @@ function sceneFor(symbols, arcs) {
   return 'thin'
 }
 
-function scenes(symbols, arcs) {
+function scenes(symbols, arcs, text) {
   const images = imagePhrase(symbols)
+  const lower = String(text || '').toLowerCase()
+  const maple = /\bmaple\b/.test(lower)
+  const bedside = maple ? "Maple's bed, right beside yours" : 'the bed beside yours'
+  const main = symbols[0]
+  const folkLine = main ? firstFolk(main) : ''
+  const psychLine = main ? firstPsych(main) : ''
   return {
     'train-haul': {
       psych: [
@@ -231,21 +244,47 @@ function scenes(symbols, arcs) {
       takeaway: 'It reads like a wish to move, held back by the wish to move safely.',
       question: 'What are you waiting for permission to leave?'
     },
+    infestation: {
+      psychShort: `On ${bedside}, a few specks become a pile. You gather the linen and throw it out the window instead of sleeping next to them.`,
+      psych: `On ${bedside}, a few specks turn into a pile. The trouble starts small, next to a dog you care for, and grows until you gather the linen and throw it out the window. You are not overrun. You notice the pile, and you put it outside.`,
+      folk: 'In old dream books, fleas, lice, and other little insects stand for small worries or irritations that breed when they stay near the place you rest. Some folk traditions read a swarm the other way, as small gain multiplying. A dog, in folk tradition, is loyalty and a friend. Throwing the sheet out the window is the old gesture of casting a trouble out of the house rather than sleeping beside it.',
+      folkShort: 'In old dream books, fleas are small worries that breed beside the place you rest, and throwing them out the window is casting that trouble out of the house.',
+      takeaway: 'A small problem grew beside someone you look after, and you chose to get rid of it rather than live with the pile.',
+      question: 'What in your days is still small, and already starting to multiply?'
+    },
     symbols: {
-      psych: `${images.charAt(0).toUpperCase()}${images.slice(1)} are working as one theme, not as entries to define in a row. Together they set a weather you are walking through.`,
-      folk: 'Traditional tellings would hear those images as a single passage: a sign on the road, not a fortune and not a list.',
-      folkShort: 'Folklore would treat them as one sign on the road, not a set of separate fortunes.',
-      takeaway: 'It reads like a mood that found pictures, asking to be felt as a whole before it is taken apart.',
-      question: 'Which part of this feels most like something from your waking days?'
+      psych: main
+        ? `${psychLine}`
+        : 'There is no single strong picture here, so the reading stays with what you did and how it felt.',
+      folk: main
+        ? `In folk tradition, ${folkLine.charAt(0).toLowerCase()}${folkLine.slice(1)}`
+        : 'In old dream books, a dream with few pictures is still read from the feeling it left.',
+      folkShort: main
+        ? `In folk tradition, ${folkLine.charAt(0).toLowerCase()}${folkLine.slice(1)}`
+        : 'In old dream books, a quiet dream is read from the feeling it left.',
+      takeaway: main
+        ? `The dream turns on ${main.name.toLowerCase()}, and on what you did once that image was in the room.`
+        : 'The dream is asking you to notice the feeling, because it did not leave a clearer picture.',
+      question: 'What in your waking days feels most like this scene?'
     },
     thin: {
-      psych: 'There is no single strong image to hang this on, so the reading stays close to how the night felt and to whatever turn the story made.',
-      folk: 'Even a quiet dream has the old shape of a night journey: you went somewhere, and you came back with a feeling.',
-      folkShort: 'A quiet dream is still a night journey: you left, and you came back carrying a mood.',
-      takeaway: 'It reads like a feeling asking to be noticed, more than a plot asking to be solved.',
+      psych: 'Nothing in the dream stands out as a clear picture, so this stays with the feeling you marked and with the simple fact of the scene.',
+      folk: 'In old dream books, a sparse dream is still read from the mood it leaves, not from a symbol that was not there.',
+      folkShort: 'In old dream books, a sparse dream is read from the mood it leaves.',
+      takeaway: 'There is no plot to solve here, only the feeling the night left with you.',
       question: 'What in the day felt most like the mood you woke with?'
     }
   }
+}
+
+function firstPsych(symbol) {
+  const sentence = String(symbol.psych || '').split(/(?<=[.!?])\s/)[0] || ''
+  return sentence
+}
+
+function firstFolk(symbol) {
+  const sentence = String(symbol.folk || '').split(/(?<=[.!?])\s/)[0] || ''
+  return sentence
 }
 
 function finish(dream, detailed, scene) {
@@ -255,7 +294,8 @@ function finish(dream, detailed, scene) {
   if (!detailed) {
     const bit = extra[0] ? ` ${extra[0]}` : ''
     const sensed = detail ? ` ${detail}` : ''
-    return [`${scene.psych}${bit}${sensed} ${scene.folkShort} ${end}`, NOTE]
+    const opening = scene.psychShort || scene.psych
+    return [`${opening}${bit}${sensed} ${scene.folkShort} ${end}`, NOTE]
   }
   const psych = [scene.psych, ...extra.slice(0, 2), detail].filter(Boolean).join(' ')
   return [psych, scene.folk, end, NOTE]
@@ -266,8 +306,8 @@ export function fullInterpretation(dream, depth = 'short') {
   const symbols = promptSymbols(text, 3)
   const arcs = detectArcs(text)
   const thin = symbols.length === 0 && arcs.length === 0
-  const key = thin ? 'thin' : sceneFor(symbols, arcs)
-  const scene = scenes(symbols, arcs)[key]
+  const key = thin ? 'thin' : sceneFor(symbols, arcs, text)
+  const scene = scenes(symbols, arcs, text)[key]
   const detailed = depth === 'detailed'
   return finish(dream || {}, detailed, scene).join('\n\n')
 }

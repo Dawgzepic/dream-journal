@@ -102,35 +102,75 @@ export function detailCueLines(dream) {
   return lines
 }
 
+const VAGUE = new Set(['unclear', 'unknown', 'not sure'])
+
+function usefulChoice(item) {
+  const choice = item?.choices?.[0] || ''
+  if (!choice || VAGUE.has(choice.toLowerCase())) return ''
+  return choice
+}
+
+function timeWhen(time) {
+  return {
+    dawn: 'at dawn',
+    day: 'in the daytime',
+    dusk: 'at dusk',
+    night: 'at night'
+  }[String(time || '').toLowerCase()] || ''
+}
+
+function settingWhere(setting, note, story) {
+  const extra = String(note || '').trim()
+  const set = String(setting || '').toLowerCase()
+  const home = /\bhome\b/i.test(extra)
+  const inBed = /\bbed\b/i.test(story || '')
+  if (home && set === 'indoors' && inBed) return 'at home, in your own bed'
+  if (home && set === 'indoors') return 'at home, indoors'
+  if (home) return 'at home'
+  if (set === 'vehicle') return extra ? `in a vehicle, ${extra}` : 'in a vehicle'
+  if (set === 'indoors') return extra ? `indoors, ${extra}` : 'indoors'
+  if (set === 'outdoors') return extra ? `outdoors, ${extra}` : 'outdoors'
+  if (set === 'city') return extra ? `in the city, ${extra}` : 'in the city'
+  if (set === 'nature') return extra ? `out in nature, ${extra}` : 'out in nature'
+  if (set === 'water') return extra ? `by the water, ${extra}` : 'by the water'
+  if (extra) return extra
+  return ''
+}
+
+function endingClause(ending, where, when) {
+  const place = [when, where].filter(Boolean).join(', ')
+  const key = String(ending || '').toLowerCase()
+  if (key === 'woke up') return place ? `You woke from it ${place}.` : 'You woke from it.'
+  if (key === 'escaped') return place ? `You got away, ${place}.` : 'You got away.'
+  if (key === 'resolved') return place ? `It resolved, ${place}.` : 'It came to a resolution.'
+  if (key === 'cut off') return place ? `It cut off, ${place}.` : 'It cut off before it finished.'
+  if (key === 'still going') return place ? `It was still going, ${place}.` : 'It was still going when the dream stopped.'
+  return place ? `This was ${place}.` : ''
+}
+
 export function detailReadingBits(dream) {
   const details = dream?.details || {}
   const bits = []
-  const time = details.time?.choices?.[0]
-  const setting = details.setting?.choices?.[0]
-  const settingNote = details.setting?.note || ''
-  if (time && (setting || settingNote)) {
-    const where = [setting ? setting.toLowerCase() : '', settingNote].filter(Boolean).join(', ')
-    bits.push(`You set the dream at ${time.toLowerCase()}, in a setting you called ${where}.`)
-  } else if (time) {
-    bits.push(`You set the dream at ${time.toLowerCase()}.`)
-  } else if (setting || settingNote) {
-    const where = [setting ? setting.toLowerCase() : '', settingNote].filter(Boolean).join(', ')
-    bits.push(`You called the setting ${where}.`)
-  }
-  const people = details.people?.choices || []
-  if (people.length) bits.push(`The company you named was ${people.join(', ').toLowerCase()}.`)
-  const ending = details.ending?.choices?.[0]
-  if (ending) bits.push(`The way it ended was ${ending.toLowerCase()}.`)
+  const time = usefulChoice(details.time)
+  const setting = usefulChoice(details.setting)
+  const where = settingWhere(setting, details.setting?.note, dream?.story)
+  const when = timeWhen(time)
+  const ending = usefulChoice(details.ending)
+  const placed = endingClause(ending, where, when)
+  if (placed) bits.push(placed)
+  const people = (details.people?.choices || []).filter((choice) => !VAGUE.has(String(choice).toLowerCase()))
+  if (people.length === 1 && people[0].toLowerCase() === 'alone') bits.push('You were alone in it.')
+  else if (people.length) bits.push(`You were with ${people.join(' and ').toLowerCase()}.`)
   const place = details.place?.choices || []
   const familiar = place.some((choice) => /familiar|real place/i.test(choice))
-  const remind = details.place?.note || ''
+  const remind = String(details.place?.note || '').trim()
   const events = String(dream?.events || '').trim()
   if (familiar && events) {
     bits.push(remind
-      ? `That familiar place (${remind}) sits next to the waking life you linked: ${events}`
-      : `The place felt familiar, next to the waking life you linked: ${events}`)
+      ? `The familiar place, ${remind}, sits next to what you linked from waking life: ${events}`
+      : `The place felt familiar, next to what you linked from waking life: ${events}`)
   } else if (familiar && remind) {
-    bits.push(`The place felt familiar and reminded you of ${remind}.`)
+    bits.push(`The place felt familiar. It reminded you of ${remind}.`)
   }
   return bits
 }

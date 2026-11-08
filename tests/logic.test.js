@@ -225,6 +225,55 @@ test('cars in a park reads as conflict and escape', () => {
   assert.match(text, /scared/i)
 })
 
+const FLEAS = 'I rolled over in my bed and locked eyes with Maple\'s dog bed right beside mine, which had a linen sheet on top. As I looked at her bed, I noticed a few black specks running around; soon there were more and more, and they started to form into a pile. At that point, I gathered the linen together and tossed it out the window.'
+
+test('fleas are insects on a bed, not eyes or running', () => {
+  const text = `Fleas\n${FLEAS}`
+  const ids = uniqueSymbols(findSymbols(text)).map((symbol) => symbol.id)
+  assert.equal(ids.includes('eyes'), false)
+  assert.equal(ids.includes('running'), false)
+  assert.ok(ids.includes('insects'), ids.join(','))
+  assert.ok(ids.includes('dog'), ids.join(','))
+  assert.ok(ids.includes('bed'), ids.join(','))
+  assert.ok(ids.includes('bedding') || ids.includes('discard'), ids.join(','))
+  const dream = {
+    ...blankDream(),
+    title: 'Fleas',
+    story: FLEAS,
+    isDraft: false,
+    moodsDuring: ['Confused'],
+    moodAfter: 'Confused',
+    details: {
+      time: { choices: ['Unclear'], note: '' },
+      setting: { choices: ['Indoors'], note: 'Home' },
+      ending: { choices: ['Woke up'], note: '' }
+    }
+  }
+  for (const depth of ['short', 'detailed']) {
+    const reading = fullInterpretation(dream, depth)
+    assert.match(reading, /pile|speck|flea|insect/i)
+    assert.match(reading, /window|throw/i)
+    assert.match(reading, /old dream books|folk tradition/i)
+    assert.match(reading, /Putting it together/)
+    assert.equal(/weather you are walking/i.test(reading), false)
+    assert.equal(/one sign on the road/i.test(reading), false)
+    assert.equal(/mood that found pictures/i.test(reading), false)
+    assert.equal(/you set the dream at/i.test(reading), false)
+    assert.equal(/the way it ended was/i.test(reading), false)
+    assert.equal(/\beyes\b/i.test(reading), false)
+    assert.equal(/set the dream at unclear/i.test(reading), false)
+  }
+  const short = fullInterpretation(dream, 'short').split('\n\n')[0]
+  const words = short.split(/\s+/).filter(Boolean).length
+  assert.ok(words >= 70 && words <= 140, `short is ${words} words`)
+  assert.match(short, /home/i)
+  assert.match(fullInterpretation(dream, 'detailed'), /loyalty|dog/i)
+  const idiom = uniqueSymbols(findSymbols('I keep an eye on the clock and running late I ran into an old friend.')).map((symbol) => symbol.id)
+  assert.equal(idiom.includes('eyes'), false)
+  assert.equal(idiom.includes('running'), false)
+  assert.ok(idiom.includes('late'))
+})
+
 test('a thin dream still gets a gentle reading from the mood', () => {
   const dream = {
     ...blankDream(),

@@ -92,6 +92,55 @@ function isHoldingHands(lower, index, phrase) {
   return DETERMINERS.has(prev) && HOLDING.has(prev2)
 }
 
+// Idioms that contain a symbol word without picturing that symbol.
+const IDIOMS = [
+  'locked eyes with',
+  'locked eyes',
+  'lock eyes with',
+  'lock eyes',
+  'locking eyes',
+  'keep an eye on',
+  'keep an eye out',
+  'kept an eye on',
+  'kept an eye out',
+  'an eye on',
+  'an eye out',
+  'caught my eye',
+  'caught his eye',
+  'caught her eye',
+  'caught their eye',
+  'eye to eye',
+  'turn a blind eye',
+  'in the public eye',
+  'running around',
+  'runs around',
+  'ran around',
+  'running late',
+  'running out',
+  'running low',
+  'running into',
+  'ran into',
+  'run into'
+].sort((a, b) => b.length - a.length)
+
+function insideLongerIdiom(lower, index, length) {
+  const from = Math.max(0, index - 48)
+  const slice = lower.slice(from, index + length + 24)
+  for (const idiom of IDIOMS) {
+    if (idiom.length <= length) continue
+    let at = slice.indexOf(idiom)
+    while (at >= 0) {
+      const start = from + at
+      const end = start + idiom.length
+      const before = start > 0 ? lower[start - 1] : ''
+      const after = lower[end] || ''
+      if (!isWordChar(before) && !isWordChar(after) && index >= start && index + length <= end) return true
+      at = slice.indexOf(idiom, at + 1)
+    }
+  }
+  return false
+}
+
 export function findSymbols(text) {
   const source = String(text || '')
   const lower = lowerKeep(source)
@@ -106,7 +155,7 @@ export function findSymbols(text) {
       if (index < 0) break
       const before = index > 0 ? lower[index - 1] : ''
       const after = lower[index + phrase.length] || ''
-      if (!isWordChar(before) && !isWordChar(after) && !isAdjectiveLight(lower, index, phrase) && !isHoldingHands(lower, index, phrase)) {
+      if (!isWordChar(before) && !isWordChar(after) && !isAdjectiveLight(lower, index, phrase) && !isHoldingHands(lower, index, phrase) && !insideLongerIdiom(lower, index, phrase.length)) {
         let clash = false
         for (let k = index; k < index + phrase.length; k++) {
           if (occupied[k]) {
