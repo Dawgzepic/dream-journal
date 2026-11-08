@@ -9,6 +9,7 @@ import { sampleDream } from '../src/lib/sample.js'
 import { SYMBOLS } from '../src/lib/symbols.js'
 import { currentStreak, greeting, isQuietHours, isWorkTime, nextRealityDelay } from '../src/lib/time.js'
 import { interpretationPrompt } from '../src/lib/ai.js'
+import { fullInterpretation } from '../src/lib/interpret.js'
 
 test('dictionary has 150 distinct symbols with both readings', () => {
   assert.ok(SYMBOLS.length >= 150)
@@ -172,6 +173,71 @@ test('interpretation prompt stays on the device and names both angles', () => {
   assert.match(prompt, /background only/)
   assert.match(interpretationPrompt(dream, 'short', symbols), /120 to 150 words/)
   assert.equal(prompt.includes('http'), false)
+})
+
+const TRAIN_RIDE = 'I got on a boxcar train, ontop not inside, just to go around town, but didn\'t realize until it was too late that it went coast to coast, and I was stuck for the ride. I remember thinking I had to wait for water or for the train to slow down so I could jump off as safely as possible and start the long journey home, which would only get longer the more I was stuck on the train.'
+
+test('train ride reading is one journey home, not a list of parts', () => {
+  const dream = {
+    ...blankDream(),
+    title: 'Train Ride',
+    story: TRAIN_RIDE,
+    isDraft: false,
+    moodsDuring: ['Anxious'],
+    moodAfter: 'Sad',
+    clarity: 'Clear',
+    events: 'Work has been taking more of the week than I agreed to.'
+  }
+  for (const depth of ['short', 'detailed']) {
+    const text = fullInterpretation(dream, depth)
+    assert.match(text, /carried|stuck/i)
+    assert.match(text, /home/i)
+    assert.match(text, /Putting it together/)
+    assert.match(text, /reflection/)
+    assert.equal(/diagnos/i.test(text), false)
+    assert.equal(/\byou will\b/i.test(text), false)
+  }
+  const short = fullInterpretation(dream, 'short').split('\n\n')
+  const detailed = fullInterpretation(dream, 'detailed').split('\n\n')
+  assert.equal(short.length, 2)
+  assert.equal(detailed.length, 4)
+  assert.match(detailed[2], /^Putting it together/)
+  assert.match(short[0], /Anxious/i)
+  assert.match(detailed[0], /waking life/i)
+})
+
+test('cars in a park reads as conflict and escape', () => {
+  const dream = {
+    ...blankDream(),
+    title: 'Cars in a Park',
+    story: 'Cars in a park were crashing into each other while people argued and shouted. I escaped through the trees before another one could reach me.',
+    isDraft: false,
+    moodsDuring: ['Scared'],
+    moodAfter: 'Anxious',
+    tags: ['Nightmare']
+  }
+  const text = fullInterpretation(dream, 'detailed')
+  assert.match(text, /conflict|clash|argu|fight/i)
+  assert.match(text, /escape|way out|get away|getting away/i)
+  assert.match(text, /Putting it together/)
+  assert.match(text, /nightmare/i)
+  assert.match(text, /scared/i)
+})
+
+test('a thin dream still gets a gentle reading from the mood', () => {
+  const dream = {
+    ...blankDream(),
+    title: 'Quiet',
+    story: 'I sat and breathed.',
+    isDraft: false,
+    moodsDuring: ['Peaceful'],
+    moodAfter: 'Peaceful'
+  }
+  const text = fullInterpretation(dream, 'short')
+  assert.match(text, /peaceful/i)
+  assert.match(text, /Putting it together/)
+  assert.match(text, /reflection/)
+  assert.equal(/train/i.test(text), false)
 })
 
 test('bedtime buckets count nightmares', () => {

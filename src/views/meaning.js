@@ -1,5 +1,6 @@
 import { findSymbols, promptSymbols, uniqueSymbols } from '../lib/analyze.js'
 import { interpretationPrompt, imagePrompt } from '../lib/ai.js'
+import { fullInterpretation } from '../lib/interpret.js'
 import { displayTitle } from '../lib/dreams.js'
 import { firstSentence } from '../lib/format.js'
 import { symbolById } from '../lib/symbols.js'
@@ -14,6 +15,7 @@ export function mountMeaning(root, route) {
   }
   let depth = 'short'
   let highlighted = false
+  let notesOpen = false
   let active = ''
 
   function draw() {
@@ -29,6 +31,7 @@ export function mountMeaning(root, route) {
     const shown = highlighted ? symbols : []
     const prompt = interpretationPrompt(dream, depth, promptSymbols(`${dream.title}\n${dream.story || ''}`))
     const picture = imagePrompt(dream)
+    const reading = fullInterpretation(dream, depth)
     root.innerHTML = `<div class="page">
       <a class="back" href="#/dream/${esc(dream.id)}">Back to the dream</a>
       ${dream.isSample ? '<p class="badge">Sample</p>' : ''}
@@ -38,21 +41,28 @@ export function mountMeaning(root, route) {
         <button type="button" data-depth="short" data-testid="depth-short" aria-pressed="${depth === 'short'}">Short</button>
         <button type="button" data-depth="detailed" data-testid="depth-detailed" aria-pressed="${depth === 'detailed'}">Detailed</button>
       </div>
+      <section class="card reading" data-testid="full-interpretation">
+        <h2>Full interpretation</h2>
+        ${readingParagraphs(reading)}
+      </section>
       <button type="button" class="btn secondary" data-testid="highlight-symbols">${highlighted ? 'Hide symbol highlights' : 'Highlight symbols'}</button>
       <article class="prose dream-text" data-testid="meaning-story">${renderStory(dream.story || '', adjusted)}</article>
-      <section data-testid="symbol-list">
-        ${shown.length ? shown.map((symbol) => `<article class="card symbol-card ${active === symbol.id ? 'on' : ''}" data-symbol-card="${esc(symbol.id)}" data-testid="symbol-card">
-          <h2>${esc(symbol.name)}</h2>
-          <p><span class="eyebrow">Psychology</span> ${esc(depth === 'detailed' ? symbol.psych : firstSentence(symbol.psych))}</p>
-          <p><span class="eyebrow">Folklore</span> ${esc(depth === 'detailed' ? symbol.folk : firstSentence(symbol.folk))}</p>
-        </article>`).join('') : highlighted ? '<p class="muted">None of the dictionary symbols appear in this dream as whole words. You can still copy a prompt.</p>' : '<p class="muted">Symbols stay quiet until you ask for them. The dictionary holds common images, each with a psychology reading and a folklore reading. They are ideas, not a diagnosis.</p>'}
-      </section>
+      <details class="card symbol-notes" data-testid="symbol-notes" ${notesOpen ? 'open' : ''}>
+        <summary>Symbol notes</summary>
+        <section data-testid="symbol-list">
+          ${shown.length ? shown.map((symbol) => `<article class="card symbol-card ${active === symbol.id ? 'on' : ''}" data-symbol-card="${esc(symbol.id)}" data-testid="symbol-card">
+            <h2>${esc(symbol.name)}</h2>
+            <p><span class="eyebrow">Psychology</span> ${esc(depth === 'detailed' ? symbol.psych : firstSentence(symbol.psych))}</p>
+            <p><span class="eyebrow">Folklore</span> ${esc(depth === 'detailed' ? symbol.folk : firstSentence(symbol.folk))}</p>
+          </article>`).join('') : highlighted ? '<p class="muted">None of the dictionary symbols appear in this dream as whole words. You can still copy a prompt.</p>' : '<p class="muted">These are notes on single images, not the reading of the dream. They stay quiet until you ask for highlights. Each note is an idea, not a diagnosis.</p>'}
+        </section>
+      </details>
       <section class="card">
-        <h2>Ask without sending</h2>
-        <p>This builds a prompt on your device. It includes the dream, the depth you chose, and both the psychology and folklore angles.</p>
+        <h2>Want a deeper AI reading?</h2>
+        <p>Copy this and paste it to Grokel in the Grok Bot app.</p>
+        <p class="fine">The text in the box is a request for an AI, not the reading itself.</p>
         <textarea data-testid="ai-prompt" readonly rows="8"></textarea>
         <button type="button" class="btn primary" data-testid="copy-interpretation">Copy interpretation prompt</button>
-        <p class="paste-note">Paste this to Grokel</p>
       </section>
       <section class="card">
         <h2>AI dream picture</h2>
@@ -64,6 +74,9 @@ export function mountMeaning(root, route) {
     </div>`
     root.querySelector('[data-testid="ai-prompt"]').value = prompt
     root.querySelector('[data-testid="image-prompt"]').value = picture
+    root.querySelector('[data-testid="symbol-notes"]').addEventListener('toggle', (event) => {
+      notesOpen = event.currentTarget.open
+    })
     root.querySelector('[data-testid="highlight-symbols"]').addEventListener('click', () => {
       highlighted = !highlighted
       draw()
@@ -73,6 +86,16 @@ export function mountMeaning(root, route) {
     root.querySelector('[data-testid="copy-interpretation"]').addEventListener('click', () => copyPrompt(prompt, root.querySelector('[data-testid="copy-interpretation"]')))
     root.querySelector('[data-testid="copy-image"]').addEventListener('click', () => copyPrompt(picture, root.querySelector('[data-testid="copy-image"]')))
     window.scrollTo(0, y)
+  }
+
+  function readingParagraphs(reading) {
+    return reading.split('\n\n').map((para) => {
+      if (para.startsWith('Putting it together:')) {
+        return `<p><strong>Putting it together.</strong> ${esc(para.slice('Putting it together:'.length).trim())}</p>`
+      }
+      if (para.startsWith('This is a reflection')) return `<p class="fine">${esc(para)}</p>`
+      return `<p>${esc(para)}</p>`
+    }).join('')
   }
 
   function onSymbol(event) {
