@@ -1,0 +1,24 @@
+{
+  "name": "dream-journal",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "icons": "node scripts/make-icons.mjs",
+    "dev": "vite --host 0.0.0.0 --port 8741 --strictPort",
+    "build": "node scripts/make-icons.mjs && vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 8741 --strictPort",
+    "test:logic": "node --test tests/logic.test.js",
+    "test": "node --test tests/logic.test.js && playwright test"
+  },
+  "dependencies": {
+    "@fontsource-variable/eb-garamond": "^5.2.8",
+    "chart.js": "^4.5.1",
+    "jspdf": "^3.0.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "vite": "^6.4.1",
+    "vite-plugin-pwa": "^1.1.0"
+  }
+}

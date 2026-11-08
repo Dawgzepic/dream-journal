@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#140c22" />
+    <meta name="description" content="A private dream journal that stays on this device." />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Dream Journal" />
+    <title>Dream Journal</title>
+    <link rel="icon" href="%BASE_URL%favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="%BASE_URL%icons/apple-touch-icon.png" />
+  </head>
+  <body>
+    <div id="stars" aria-hidden="true"></div>
+    <a class="skip" href="#main">Skip to content</a>
+    <div id="app"></div>
+    <div id="toasts" aria-live="polite"></div>
+    <noscript>
+      <p class="noscript">Dream Journal needs JavaScript. It still keeps whatever you write on this device, and it does not send the journal anywhere.</p>
+    </noscript>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
