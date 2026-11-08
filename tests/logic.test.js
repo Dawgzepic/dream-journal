@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { bedtimeBuckets, findSymbols, recurringGroups, symbolCounts, uniqueSymbols } from '../src/lib/analyze.js'
+import { bedtimeBuckets, findSymbols, recurringGroups, uniqueSymbols } from '../src/lib/analyze.js'
 import { parseBackup, journalToText } from '../src/lib/backup.js'
 import { defaultSettings } from '../src/lib/constants.js'
 import { blankDream, normalizeDream, userDreams } from '../src/lib/dreams.js'
@@ -145,14 +145,32 @@ test('backup text and import keep dreams and drop a bad file', () => {
   assert.deepEqual(cleaned.moodsDuring, ['Happy'])
 })
 
+test('a light jog is not Light, and the car still counts', () => {
+  const text = 'I started doing a light jog toward my car, which was all the way across the field.'
+  const ids = new Set(uniqueSymbols(findSymbols(text)).map((symbol) => symbol.id))
+  assert.equal(ids.has('light'), false)
+  assert.equal(ids.has('car'), true)
+  assert.equal(uniqueSymbols(findSymbols('light rain and a light blue door')).some((symbol) => symbol.id === 'light'), false)
+  assert.equal(uniqueSymbols(findSymbols('Then the lights went out.')).some((symbol) => symbol.id === 'light'), true)
+  assert.equal(uniqueSymbols(findSymbols('my shirt in my hand')).some((symbol) => symbol.id === 'hands'), false)
+  assert.equal(uniqueSymbols(findSymbols('my hands were enormous')).some((symbol) => symbol.id === 'hands'), true)
+})
+
 test('interpretation prompt stays on the device and names both angles', () => {
   const dream = sampleDream()
-  const symbols = symbolCounts([dream])
-  const prompt = interpretationPrompt(dream, 'detailed', symbols.map((row) => row.symbol).slice(0, 2))
+  const symbols = uniqueSymbols(findSymbols(`${dream.title}\n${dream.story}`)).slice(0, 2)
+  const prompt = interpretationPrompt(dream, 'detailed', symbols)
   assert.match(prompt, /psychology/i)
   assert.match(prompt, /folklore/i)
   assert.match(prompt, /detailed/)
   assert.match(prompt, /library/i)
+  assert.match(prompt, /Putting it together/)
+  assert.match(prompt, /Do not define each symbol separately/)
+  assert.match(prompt, /350 to 480 words/)
+  assert.match(prompt, /diagnosis/i)
+  assert.match(prompt, /predicts the future/)
+  assert.match(prompt, /background only/)
+  assert.match(interpretationPrompt(dream, 'short', symbols), /120 to 150 words/)
   assert.equal(prompt.includes('http'), false)
 })
 

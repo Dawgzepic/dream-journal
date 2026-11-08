@@ -1,18 +1,24 @@
 import { screenLabel } from './constants.js'
 import { firstSentence, formatWhen } from './format.js'
 
+const DEPTH_WORDS = {
+  short: 'about 120 to 150 words',
+  medium: 'about 220 to 300 words',
+  detailed: 'about 350 to 480 words'
+}
+
 export function interpretationPrompt(dream, depth, symbols) {
-  const detailed = depth === 'detailed'
+  const level = DEPTH_WORDS[depth] ? depth : 'short'
+  const detailed = level === 'detailed'
   const lines = [
-    'You are a thoughtful dream interpreter. Do not give a medical or psychiatric diagnosis. Treat the dream as a personal image, not evidence about health.',
-    `Depth: ${detailed ? 'detailed' : 'short'}.`,
-    'Offer two angles: a psychology-based reading, and a folklore or traditional reading. Say where the two agree and where they do not. Do not claim the dream predicts the future.'
+    'You are a thoughtful dream interpreter. Do not give a medical or psychiatric diagnosis. Treat the dream as a personal image, not evidence about health. Do not claim the dream predicts the future.',
+    `Depth: ${level}.`,
+    `Write one concise reading of ${DEPTH_WORDS[level]}. Do not define each symbol separately, and do not list the images one by one.`,
+    'Use this shape:',
+    'A brief psychology angle that ties the images to the moods during the dream, the feeling on waking, and any real-life links, as one connected thought.',
+    'A brief folklore or traditional angle that does the same, weaving the images into the moods and the waking life instead of glossing each symbol.',
+    'Then a final section labeled "Putting it together": one overall meaning that connects the story, the moods during and after the dream, and the linked real-life events into a single takeaway. End with one gentle reflective question.'
   ]
-  if (detailed) {
-    lines.push('Walk through the main images, then the feelings, then anything from the day that might have contributed. Keep the tone calm and specific.')
-  } else {
-    lines.push('Keep the whole reply under 180 words.')
-  }
   lines.push('', `Title: ${dream.title || 'Untitled'}`, `When: ${formatWhen(dream.datetime)}`)
   if (dream.moodsDuring?.length) lines.push(`Mood during the dream: ${dream.moodsDuring.join(', ')}`)
   if (dream.moodAfter) lines.push(`Mood after waking: ${dream.moodAfter}`)
@@ -27,9 +33,10 @@ export function interpretationPrompt(dream, depth, symbols) {
   if (bed.screen) bits.push(`screen time: ${screenLabel(bed.screen)}`)
   if (bits.length) lines.push(`Bedtime: ${bits.join('; ')}`)
   lines.push('', 'Dream:', dream.story || '')
-  if (symbols?.length) {
-    lines.push('', 'Dictionary notes you may draw on (psychology, then folklore). Use them as background, not as a verdict:')
-    for (const symbol of symbols) {
+  const notes = (symbols || []).slice(0, 5)
+  if (notes.length) {
+    lines.push('', 'Dictionary notes you may draw on (psychology, then folklore). Use them as background only, not as a verdict, and ignore any note that does not fit this dream:')
+    for (const symbol of notes) {
       const psych = detailed ? symbol.psych : firstSentence(symbol.psych)
       const folk = detailed ? symbol.folk : firstSentence(symbol.folk)
       lines.push(`- ${symbol.name}: ${psych} / ${folk}`)

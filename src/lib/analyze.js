@@ -50,6 +50,48 @@ function isWordChar(ch) {
   return !!ch && /[a-z0-9]/i.test(ch)
 }
 
+const HOLDING = new Set(['in', 'into', 'with', 'on', 'from'])
+const DETERMINERS = new Set(['my', 'his', 'her', 'their', 'your', 'our', 'the', 'a', 'an'])
+
+function nextWord(lower, index) {
+  let i = index
+  while (i < lower.length && !/[a-z]/i.test(lower[i])) i++
+  let j = i
+  while (j < lower.length && /[a-z]/i.test(lower[j])) j++
+  return lower.slice(i, j)
+}
+
+function previousWords(lower, index, count) {
+  const words = []
+  let i = index - 1
+  while (i >= 0 && words.length < count) {
+    while (i >= 0 && !/[a-z]/i.test(lower[i])) i--
+    if (i < 0) break
+    let j = i
+    while (j >= 0 && /[a-z]/i.test(lower[j])) j--
+    words.push(lower.slice(j + 1, i + 1))
+    i = j
+  }
+  return words
+}
+
+// "light jog" is an adjective. "the lights went out" is the noun.
+function isAdjectiveLight(lower, index, phrase) {
+  if (phrase !== 'light') return false
+  const next = nextWord(lower, index + phrase.length)
+  if (!next || STOP.has(next)) return false
+  if (/(?:ed|ing)$/.test(next)) return false
+  return true
+}
+
+// "in my hand" / "with my hands" is holding something, not the Hands image.
+function isHoldingHands(lower, index, phrase) {
+  if (phrase !== 'my hand' && phrase !== 'hands' && phrase !== 'fingers') return false
+  const [prev, prev2] = previousWords(lower, index, 2)
+  if (HOLDING.has(prev)) return true
+  return DETERMINERS.has(prev) && HOLDING.has(prev2)
+}
+
 export function findSymbols(text) {
   const source = String(text || '')
   const lower = lowerKeep(source)
@@ -64,7 +106,7 @@ export function findSymbols(text) {
       if (index < 0) break
       const before = index > 0 ? lower[index - 1] : ''
       const after = lower[index + phrase.length] || ''
-      if (!isWordChar(before) && !isWordChar(after)) {
+      if (!isWordChar(before) && !isWordChar(after) && !isAdjectiveLight(lower, index, phrase) && !isHoldingHands(lower, index, phrase)) {
         let clash = false
         for (let k = index; k < index + phrase.length; k++) {
           if (occupied[k]) {
@@ -82,6 +124,20 @@ export function findSymbols(text) {
   }
   ranges.sort((a, b) => a.start - b.start || b.end - a.end)
   return ranges
+}
+
+export function promptSymbols(text, limit = 5) {
+  const stats = new Map()
+  for (const range of findSymbols(text)) {
+    const prev = stats.get(range.symbol.id) || { symbol: range.symbol, count: 0, longest: 0 }
+    prev.count += 1
+    prev.longest = Math.max(prev.longest, range.end - range.start)
+    stats.set(range.symbol.id, prev)
+  }
+  return [...stats.values()]
+    .sort((a, b) => b.count - a.count || b.longest - a.longest || a.symbol.name.localeCompare(b.symbol.name))
+    .slice(0, limit)
+    .map((row) => row.symbol)
 }
 
 export function uniqueSymbols(ranges) {

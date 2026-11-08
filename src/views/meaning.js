@@ -1,4 +1,4 @@
-import { findSymbols, uniqueSymbols } from '../lib/analyze.js'
+import { findSymbols, promptSymbols, uniqueSymbols } from '../lib/analyze.js'
 import { interpretationPrompt, imagePrompt } from '../lib/ai.js'
 import { displayTitle } from '../lib/dreams.js'
 import { firstSentence } from '../lib/format.js'
@@ -27,7 +27,7 @@ export function mountMeaning(root, route) {
     })).filter((range) => range.start >= 0)
     const symbols = uniqueSymbols(findSymbols(`${dream.title}\n${dream.story || ''}`))
     const shown = highlighted ? symbols : []
-    const prompt = interpretationPrompt(dream, depth, symbols)
+    const prompt = interpretationPrompt(dream, depth, promptSymbols(`${dream.title}\n${dream.story || ''}`))
     const picture = imagePrompt(dream)
     root.innerHTML = `<div class="page">
       <a class="back" href="#/dream/${esc(dream.id)}">Back to the dream</a>
