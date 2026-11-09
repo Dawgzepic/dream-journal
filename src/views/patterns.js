@@ -1,6 +1,7 @@
 import Chart from 'chart.js/auto'
 import { bedtimeBuckets, cloudWords, groupWords, isSymbolName, monthOptions, monthRecap, moodTrend, recurringGroups, summarize, symbolCounts } from '../lib/analyze.js'
 import { displayTitle } from '../lib/dreams.js'
+import { monthSelfLine } from '../lib/personality.js'
 import { formatDay, monthLabel } from '../lib/format.js'
 import { state } from '../state.js'
 import { esc } from '../ui.js'
@@ -188,7 +189,8 @@ export function mountPatterns(root) {
   const select = root.querySelector('[data-testid="month-select"]')
   function showMonth() {
     const data = monthRecap(state.dreams, select.value)
-    recap.innerHTML = `<p>${esc(data.prose)}</p>${data.titles.length ? `<ul>${data.titles.map((title) => `<li>${esc(title)}</li>`).join('')}</ul>` : ''}`
+    const selfLine = monthSelfLine(state.dreams, select.value)
+    recap.innerHTML = `<p>${esc(data.prose)}</p>${selfLine ? `<p data-testid="month-self">${esc(selfLine)}</p>` : ''}${data.titles.length ? `<ul>${data.titles.map((title) => `<li>${esc(title)}</li>`).join('')}</ul>` : ''}`
   }
   select.addEventListener('change', showMonth)
   showMonth()

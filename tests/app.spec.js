@@ -86,6 +86,11 @@ test('journal flow, exports, and mobile screens', async ({ page }) => {
   await expect(page.getByTestId('stat-dreams').locator('strong')).toHaveText('0')
   await expect(page.getByTestId('reminder-banner')).toContainText(/best-effort/i)
   await expect(page.getByTestId('nav')).toHaveCount(1)
+  await page.locator('a[href="#/self"]').click()
+  await expect(page.getByTestId('self-progress')).toContainText('0 of 5')
+  await expect(page.getByTestId('quiz-prompt')).toBeVisible()
+  await expect(page.getByTestId('self-note')).toContainText(/not a diagnosis/)
+  await page.locator('a[href="#/home"]').first().click()
 
   await page.getByTestId('new-dream').click()
   await expect(page.getByTestId('voice-button')).toHaveCount(await page.evaluate(() => (window.SpeechRecognition || window.webkitSpeechRecognition) ? 1 : 0))
@@ -285,6 +290,11 @@ test('journal flow, exports, and mobile screens', async ({ page }) => {
   await page.getByTestId('save-jot').click()
   await expect(page.getByText('bell tower stairs')).toBeVisible()
 
+  await page.locator('a[href="#/self"]').click()
+  await expect(page.getByTestId('self-profile')).toBeVisible()
+  await expect(page.getByTestId('trait-radar')).toBeVisible()
+  await expect(page.getByTestId('archetype-wheel')).toBeVisible()
+  await page.screenshot({ path: path.join(artifacts, 'self.png'), fullPage: true })
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)
   expect(overflow).toBe(true)
   await page.setViewportSize({ width: 1280, height: 800 })

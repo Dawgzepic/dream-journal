@@ -1,5 +1,6 @@
 import { screenLabel } from './constants.js'
 import { detailSummaryLines } from './details.js'
+import { cleanPersonality, personalityBundle, personalityExport } from './personality.js'
 import { normalizeDream } from './dreams.js'
 import { formatWhen, dayKey } from './format.js'
 
@@ -12,7 +13,7 @@ function pdfSafe(value) {
     .replace(/[^\n\r\t\x20-\x7E]/g, '')
 }
 
-export function journalToText(dreams) {
+export function journalToText(dreams, settings) {
   const list = [...dreams].sort((a, b) => new Date(a.datetime) - new Date(b.datetime))
   const parts = ['Dream Journal', 'Private copy for Timothy.', '']
   for (const dream of list) {
@@ -44,6 +45,11 @@ export function journalToText(dreams) {
     parts.push('')
   }
   if (!list.length) parts.push('No dreams were saved.')
+  const profile = personalityExport(dreams, settings)
+  if (profile) {
+    parts.push(profile)
+    parts.push('')
+  }
   return parts.join('\n')
 }
 
@@ -66,7 +72,7 @@ export function journalToJSON(settings, dreams) {
     app: 'Dream Journal',
     version: 1,
     exportedAt: new Date().toISOString(),
-    preferences: preferencesFrom(settings),
+    preferences: { ...preferencesFrom(settings), personality: personalityBundle(dreams, settings) },
     dreams
   }, null, 2)
 }
@@ -107,7 +113,8 @@ export function sanitizePrefs(prefs) {
     realityReminder: typeof prefs.realityReminder === 'boolean' ? prefs.realityReminder : null,
     customMoods: Array.isArray(prefs.customMoods) ? prefs.customMoods.map(String).slice(0, 40) : [],
     customTags: Array.isArray(prefs.customTags) ? prefs.customTags.map(String).slice(0, 40) : [],
-    voiceOptIn: prefs.voiceOptIn === true || prefs.voiceOptIn === false ? prefs.voiceOptIn : null
+    voiceOptIn: prefs.voiceOptIn === true || prefs.voiceOptIn === false ? prefs.voiceOptIn : null,
+    personality: prefs.personality ? cleanPersonality(prefs.personality) : null
   }
 }
 
@@ -124,6 +131,7 @@ export function applyPrefs(settings, prefs) {
   if (prefs.customMoods) next.customMoods = prefs.customMoods
   if (prefs.customTags) next.customTags = prefs.customTags
   if (prefs.voiceOptIn != null) next.voiceOptIn = prefs.voiceOptIn
+  if (prefs.personality) next.personality = cleanPersonality(prefs.personality)
   return next
 }
 
@@ -139,7 +147,7 @@ export function downloadBlob(filename, blob) {
   setTimeout(() => URL.revokeObjectURL(url), 1500)
 }
 
-export async function downloadPdf(dreams) {
+export async function downloadPdf(dreams, settings) {
   const { jsPDF } = await import('jspdf')
   const doc = new jsPDF({ unit: 'pt', format: 'a4' })
   const margin = 56
@@ -190,6 +198,12 @@ export async function downloadPdf(dreams) {
       for (const line of detailLines) write(line)
     }
     write(dream.story || '')
+  }
+  const profile = personalityExport(dreams, settings)
+  if (profile) {
+    y += 12
+    write('Personality', 16, 'bold')
+    for (const paragraph of profile.split('\n\n').slice(1)) write(paragraph)
   }
   doc.save(`dream-journal-${dayKey(new Date())}.pdf`)
 }

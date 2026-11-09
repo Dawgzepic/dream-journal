@@ -28,7 +28,8 @@ export function icon(name) {
     book: '<path d="M5 4.8h9.2A3.3 3.3 0 0 1 17.5 8.1V19H8.2A3.2 3.2 0 0 0 5 15.8z"/><path d="M5 4.8v11"/>',
     chart: '<path d="M4 19h16"/><path d="M7 16v-4"/><path d="M12 16V7"/><path d="M17 16v-6"/>',
     eye: '<path d="M2.5 12S6.2 6.8 12 6.8 21.5 12 21.5 12 17.8 17.2 12 17.2 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.1"/>',
-    sliders: '<path d="M4 8h16"/><path d="M4 16h16"/><circle cx="9" cy="8" r="1.8"/><circle cx="15" cy="16" r="1.8"/>'
+    sliders: '<path d="M4 8h16"/><path d="M4 16h16"/><circle cx="9" cy="8" r="1.8"/><circle cx="15" cy="16" r="1.8"/>',
+    you: '<circle cx="12" cy="8" r="3"/><path d="M5.6 19.2c1.1-3.1 3.3-4.6 6.4-4.6s5.3 1.5 6.4 4.6"/>'
   }
   return `<svg ${common}>${paths[name] || ''}</svg>`
 }

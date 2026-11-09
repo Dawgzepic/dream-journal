@@ -17,6 +17,7 @@ import { mountLock } from './views/lock.js'
 import { mountLucid } from './views/lucid.js'
 import { mountMeaning } from './views/meaning.js'
 import { mountPatterns } from './views/patterns.js'
+import { mountSelf } from './views/self.js'
 import { mountSettings } from './views/settings.js'
 
 const titles = {
@@ -28,6 +29,7 @@ const titles = {
   details: 'Dream details · Dream Journal',
   patterns: 'Patterns · Dream Journal',
   lucid: 'Lucid dreaming · Dream Journal',
+  self: 'You · Dream Journal',
   settings: 'Settings · Dream Journal'
 }
 
@@ -55,6 +57,7 @@ function navHtml(name) {
     ['journal', '#/journal', 'Journal', 'book'],
     ['patterns', '#/patterns', 'Patterns', 'chart'],
     ['lucid', '#/lucid', 'Lucid', 'eye'],
+    ['self', '#/self', 'You', 'you'],
     ['settings', '#/settings', 'Settings', 'sliders']
   ]
   const current = navKey(name)
@@ -99,6 +102,7 @@ function render() {
       meaning: mountMeaning,
       patterns: mountPatterns,
       lucid: mountLucid,
+      self: mountSelf,
       settings: mountSettings
     }
     const mount = mounts[route.name] || mountMissing

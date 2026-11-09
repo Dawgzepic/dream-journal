@@ -10,6 +10,7 @@ export function parseHash(hash) {
   if (parts[0] === 'dream' && parts[1]) return { name: 'dream', id: decodeURIComponent(parts[1]) }
   if (parts[0] === 'patterns') return { name: 'patterns' }
   if (parts[0] === 'lucid') return { name: 'lucid' }
+  if (parts[0] === 'self' || parts[0] === 'you') return { name: 'self' }
   if (parts[0] === 'settings') return { name: 'settings' }
   return { name: 'missing' }
 }

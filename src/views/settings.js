@@ -233,13 +233,13 @@ export function mountSettings(root) {
     }
   }
   root.querySelector('[data-testid="export-text"]').addEventListener('click', async () => {
-    const text = journalToText(state.dreams)
+    const text = journalToText(state.dreams, state.settings)
     downloadBlob(`dream-journal-${new Date().toISOString().slice(0, 10)}.txt`, new Blob([text], { type: 'text/plain' }))
     await markExported()
     toast('Text file downloaded')
   })
   root.querySelector('[data-testid="export-pdf"]').addEventListener('click', async () => {
-    await downloadPdf(state.dreams)
+    await downloadPdf(state.dreams, state.settings)
     await markExported()
     toast('PDF downloaded')
   })

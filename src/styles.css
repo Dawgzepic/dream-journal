@@ -273,6 +273,10 @@ li { margin: 6px 0; }
 
 .chart-box { position: relative; height: 200px; margin-bottom: 12px; }
 .chart-box.short { height: 220px; }
+.chart-box.wheel { height: 260px; }
+.self-bars .bar-row { grid-template-columns: 128px 1fr 36px; }
+.self-bars p { margin: 0 0 12px; }
+.timeline-list time { display: block; color: var(--gold); }
 .cloud { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: baseline; justify-content: center; padding: 8px 0 18px; }
 .cloud-word { color: #d9cef6; line-height: 1.1; }
 .cloud-word.is-symbol { color: var(--gold); }
@@ -334,7 +338,7 @@ caption { text-align: left; color: var(--muted); margin-bottom: 6px; }
   gap: 2px;
   text-decoration: none;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 11px;
   padding: 6px 0;
   min-width: 0;
 }
