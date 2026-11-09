@@ -318,9 +318,10 @@ function signBlurb(sign, dreams) {
     const bits = []
     if (/bed/.test(text)) bits.push('a bed')
     if (/dog/.test(text)) bits.push('a dog')
-    if (/home|house/.test(text)) bits.push('a house')
+    if (/\bhouse\b/.test(text)) bits.push('a house')
+    else if (/\bhome\b/.test(text)) bits.push('getting home')
     if (!bits.length) return 'The Hearth is the folklore name for nights that stay indoors.'
-    return `The Hearth fits because ${joinBits(bits)} ${bits.length > 1 ? 'are' : 'is'} where the scene happens.`
+    return `The Hearth fits because the dreams gather around ${joinBits(bits)}.`
   }
   if (sign.id === 'road') {
     const bits = []
@@ -339,89 +340,135 @@ function signBlurb(sign, dreams) {
   return `${sign.name} is a folklore name for the places in these dreams, not a birth chart.`
 }
 
-function traitBlurbs(traits, dreams) {
-  const text = dreams.map(blob).join(' ')
-  const out = []
-  for (const [id, label] of TRAITS) {
-    const score = traits[id]
-    const bits = []
-    if (id === 'agreeableness') {
-      if (/dog bed|linen|speck/.test(text)) bits.push('you clear a dog bed and get the linen out of the room')
-      if (/grandmother/.test(text)) bits.push('you walk with a grandmother')
-      if (/argu|shout/.test(text)) bits.push('you step away while people are still arguing')
-    } else if (id === 'openness') {
-      if (/speck|flea/.test(text)) bits.push('specks that multiply')
-      if (/coast to coast|boxcar/.test(text)) bits.push('a train that will not stay a short ride')
-      else if (/\btrain\b/.test(text)) bits.push('a train in the scene')
-      if (/moon|horse/.test(text)) bits.push('a moon or a horse')
-      if (/\bflying\b|\bfell\b|\bfalling\b/.test(text)) bits.push('falling or flight')
-    } else if (id === 'conscientiousness') {
-      if (/linen|tossed|gathered the/.test(text)) bits.push('gather the sheet and throw it out')
-      if (/jump|slow down/.test(text)) bits.push('look for a moment to get off the train')
-      if (/escap/.test(text)) bits.push('leave the crash')
-    } else if (id === 'extraversion') {
-      if (/dog bed|speck/.test(text)) bits.push('one night is you and a bed')
-      if (/people argue|shout/.test(text)) bits.push('another night puts you among people who are arguing, and you leave')
-    } else if (id === 'sensitivity') {
-      if (/too late|stuck for the ride/.test(text)) bits.push('noticing too late that the train ride has become long')
-      if (/confused/.test(text)) bits.push('confusion that stays after you have already acted')
-      if (/scared|anxious/.test(text)) bits.push('scared or anxious marked on the dream')
+function evidenceCards(dreams) {
+  const cards = []
+  for (const dream of dreams) {
+    const text = blob(dream)
+    const name = titleOf(dream)
+    const events = String(dream.events || '').trim()
+    if (/speck|flea|dog bed|linen/.test(text)) {
+      cards.push({
+        id: `${dream.id}:care`,
+        traits: ['agreeableness', 'conscientiousness'],
+        theme: 'a mess spreading on a bed',
+        sentence: `In the ${name} dream, specks on a dog's bed become a pile and you throw the linen out the window.`
+      })
+    } else if (/coast to coast|stuck for the ride|boxcar/.test(text)) {
+      const waking = events ? ` You tied that ride to waking life: ${events.charAt(0).toLowerCase()}${events.slice(1).replace(/\.$/, '')}.` : ''
+      cards.push({
+        id: `${dream.id}:journey`,
+        traits: ['sensitivity', 'openness'],
+        theme: 'a short trip that runs too long',
+        sentence: `In the ${name} dream, you board for a quick trip and the way home gets longer while you wait for a safe jump.${waking}`
+      })
+    } else if (/crash|argu/.test(text) && /\bcar/.test(text)) {
+      cards.push({
+        id: `${dream.id}:clash`,
+        traits: ['extraversion', 'agreeableness'],
+        theme: 'a noisy clash you step out of',
+        sentence: `In the ${name} dream, cars crash while people argue, and you leave through the trees.`
+      })
+    } else if (/grandmother|garden/.test(text) && /moon/.test(text)) {
+      cards.push({
+        id: `${dream.id}:garden`,
+        traits: ['openness', 'agreeableness'],
+        theme: 'a quiet garden under the moon',
+        sentence: `In the ${name} dream, you walk in a garden with your grandmother while the moon hangs overhead.`
+      })
+    } else if (/exam|teeth|school/.test(text)) {
+      cards.push({
+        id: `${dream.id}:exam`,
+        traits: ['conscientiousness', 'sensitivity'],
+        theme: 'being put on the spot',
+        sentence: `In the ${name} dream, an exam at the old school puts you on the spot.`
+      })
+    } else if (/\btrain\b/.test(text)) {
+      cards.push({
+        id: `${dream.id}:train`,
+        traits: ['openness'],
+        theme: 'a train passing through',
+        sentence: `In the ${name} dream, a train passes through the scene.`
+      })
+    } else if (/fall|flying|childhood/.test(text)) {
+      cards.push({
+        id: `${dream.id}:air`,
+        traits: ['openness', 'sensitivity'],
+        theme: 'the ground giving way',
+        sentence: `In the ${name} dream, you are in the air and then the ground gives way.`
+      })
     }
-    let sentence = ''
-    if (bits.length && id === 'extraversion') {
-      sentence = `Extraversion is uneven. ${bits.map((bit) => bit.charAt(0).toUpperCase() + bit.slice(1)).join('. ')}.`
-    } else if (bits.length && id === 'sensitivity') sentence = `Sensitivity is ${joinBits(bits)}.`
-    else if (bits.length && id === 'conscientiousness') sentence = `Conscientiousness here is the moment you do something: ${joinBits(bits)}.`
-    else if (bits.length && id === 'openness') sentence = `Openness is the odd detail you kept: ${joinBits(bits)}.`
-    else if (bits.length) sentence = `Agreeableness shows up as this: ${joinBits(bits)}.`
-    else {
-      const lean = score >= 58 ? 'runs high' : score <= 42 ? 'runs quiet' : 'sits near the middle'
-      const names = dreams.map((dream) => titleOf(dream)).slice(0, 3).join(', ')
-      sentence = `${label} ${lean} across ${names}.`
-    }
-    out.push({ id, label, score, sentence })
   }
-  return out
+  return cards
 }
 
-function strengthsAndGaps(dreams) {
-  const text = dreams.map(blob).join(' ')
+function assignCards(cards) {
+  const used = new Set()
+  const assigned = {}
+  for (const [id] of TRAITS) {
+    const card = cards.find((item) => !used.has(item.id) && item.traits[0] === id)
+    if (!card) continue
+    used.add(card.id)
+    assigned[id] = card
+  }
+  for (const [id] of TRAITS) {
+    if (assigned[id]) continue
+    const card = cards.find((item) => !used.has(item.id) && item.traits.includes(id))
+    if (!card) continue
+    used.add(card.id)
+    assigned[id] = card
+  }
+  return { assigned, used }
+}
+
+function traitBlurbs(traits, dreams) {
+  const cards = evidenceCards(dreams)
+  const { assigned, used } = assignCards(cards)
+  const blurbs = TRAITS.map(([id, label]) => {
+    const card = assigned[id]
+    const sentence = card
+      ? card.sentence
+      : `Not enough dreams yet to read ${label.toLowerCase()} from the nights you logged.`
+    return { id, label, score: traits[id], sentence }
+  })
+  return { blurbs, cards, used }
+}
+
+function strengthsAndGaps(dreams, cards, used) {
   const strengths = []
   const gaps = []
-  if (/tossed|throw|gathered the linen|linen/.test(text)) {
-    strengths.push('You act once a mess is visible. The linen comes off the bed and goes out the window.')
-  }
-  if (/escap|trees/.test(text) && /crash|argu/.test(text)) {
-    strengths.push('You leave a fight that is not yours. In the park you get away before another car reaches you.')
-  }
-  if (/jump|slow down/.test(text)) {
-    strengths.push('You want the exit to be safe, not only fast. On the train you wait for water, or for the train to slow, before you jump.')
-  }
-  if (/stuck|too late|way home|longer/.test(text)) {
-    gaps.push('Delay is the blind spot. You notice too late that a short ride has become a long one, and the way home costs more while you wait.')
-  }
-  if (/argu|shout/.test(text) && /dog bed|linen/.test(text)) {
-    gaps.push('Care and withdrawal sit side by side. You can throw out a problem at home and still walk away from people rather than settle them.')
-  }
-  if (!strengths.length) strengths.push('The clearest strength so far is that you write the scene down, including the awkward parts.')
-  if (!gaps.length) {
-    const names = dreams.map((dream) => titleOf(dream)).slice(0, 3).join(', ')
-    gaps.push(`No repeated stuck place shows up yet in ${names}.`)
-  }
+  const spare = cards.filter((card) => !used.has(card.id))
+  if (spare[0]) strengths.push(spare[0].sentence)
+  else if (cards.some((card) => card.id.endsWith(':care') || card.id.endsWith(':clash'))) {
+    strengths.push('When a scene turns messy, you tend to move it out of the room or leave it.')
+  } else strengths.push('Not enough repeated action yet to name a strength beyond the nights you wrote down.')
+  if (cards.some((card) => card.id.endsWith(':journey'))) {
+    gaps.push('The delay shows up as a trip that keeps going after you wanted to step off.')
+  } else if (spare[1]) gaps.push(spare[1].sentence)
+  else gaps.push('Not enough dreams yet to name a repeated blind spot.')
   return { strengths, gaps }
 }
 
-function lately(dreams) {
+function latelyLine(dreams, cards) {
   const newest = [...dreams].sort((a, b) => new Date(b.datetime) - new Date(a.datetime)).slice(0, 3)
-  if (!newest.length) return ''
-  const bits = newest.map((dream) => {
-    const moods = [...new Set(moodsOf(dream).map((mood) => mood.toLowerCase()))]
-    const mood = moods.length ? ` (${moods.join(', ')})` : ''
-    const events = String(dream.events || '').trim()
-    const link = events ? `, tied to waking life: ${events}` : ''
-    return `${titleOf(dream)}${mood}${link}`
-  })
-  return `Closest to today: ${bits.join('; ')}.`
+  const feelings = [...new Set(newest.flatMap((dream) => moodsOf(dream).map((mood) => mood.toLowerCase())))]
+  if (feelings.length) return `The newest nights feel ${joinBits(feelings)}.`
+  const themes = newest.map((dream) => cards.find((card) => card.id.startsWith(`${dream.id}:`))?.theme).filter(Boolean)
+  if (themes.length) return `Lately the mind is on ${joinBits(themes)}.`
+  return 'The newest nights are too quiet to name a fresh theme yet.'
+}
+
+function shapeLines(cards) {
+  const themes = [...new Set(cards.map((card) => card.theme))].slice(0, 3)
+  const lines = []
+  lines.push(themes.length
+    ? `These nights keep circling ${joinBits(themes)}.`
+    : 'These nights do not settle on one picture yet.')
+  if (cards.some((card) => card.id.endsWith(':journey'))) {
+    lines.push('The hard moment is noticing that a small start has already gone farther than you chose.')
+  } else if (cards.some((card) => card.id.endsWith(':care') || card.id.endsWith(':clash'))) {
+    lines.push('When the scene turns, you move the trouble out instead of staying in the middle of it.')
+  }
+  return lines
 }
 
 export function buildProfile(dreams, store) {
@@ -444,26 +491,18 @@ export function buildProfile(dreams, store) {
   const archetype = archetypeOrder[0]
   const style = styleFrom(quiz.letters, traits)
   const sign = signHits(own)
-  const blurbs = traitBlurbs(traits, own)
-  const { strengths, gaps } = strengthsAndGaps(own)
-  const clauses = own.map(dreamClause).filter(Boolean).slice(0, 3)
-  const traitSentences = blurbs.map((trait) => trait.sentence)
-  const agreed = QUIZ.filter((question) => clean.answers[question.id] === 'yes').slice(0, 2)
-  const paragraphs = []
-  if (clauses.length) paragraphs.push(clauses.join(' '))
-  paragraphs.push(traitSentences.join(' '))
-  paragraphs.push(`Strengths. ${strengths.join(' ')}`)
-  paragraphs.push(`Blind spots. ${gaps.join(' ')}`)
-  const recent = lately(own)
-  if (recent) paragraphs.push(`On your mind lately. ${recent}`)
-  paragraphs.push(`The dream character is the ${archetype.name}: ${characterLine(archetype.id, own)} ${signBlurb(sign, own)}`)
-  paragraphs.push(`The style name is ${style.label}. ${style.blurb}`)
-  if (agreed.length) {
-    paragraphs.push(`On the quiz you said yes to this: ${agreed.map((question) => question.prompt.replace(/\.$/, '')).join(' And yes to this: ')}.`)
-  } else if (own.length) {
-    paragraphs.push('The quiz is not in this reading yet, so the traits above are from the dreams alone.')
-  }
-  paragraphs.push('This is a reflection from your own words and your quiz answers, not a diagnosis and not a prediction.')
+  const { blurbs, cards, used } = traitBlurbs(traits, own)
+  const { strengths, gaps } = strengthsAndGaps(own, cards, used)
+  const shape = shapeLines(cards)
+  const recent = latelyLine(own, cards)
+  const agreed = QUIZ.filter((question) => clean.answers[question.id] === 'yes').slice(0, 1)
+  const character = `The dream character is the ${archetype.name}, ${characterLine(archetype.id, own)}`
+  const signLine = signBlurb(sign, own)
+  const styleLine = `The style name is ${style.label}. ${style.blurb}`
+  const quizLine = agreed.length
+    ? `On the quiz you said yes to this: ${agreed[0].prompt}`
+    : (own.length ? 'The quiz is not in this reading yet, so the traits above are from the dreams alone.' : '')
+  const note = 'This is a reflection from your own words and your quiz answers, not a diagnosis and not a prediction.'
   const ready = own.length >= MIN_DREAMS
   const signature = [
     own.length,
@@ -487,9 +526,17 @@ export function buildProfile(dreams, store) {
     strengths,
     gaps,
     lately: recent,
-    paragraphs: ready ? paragraphs : [],
-    essay: ready ? paragraphs.join('\n\n') : '',
-    headline: ready ? (clauses[0] || `${archetype.name} is the figure these dreams keep casting.`) : '',
+    shape: ready ? shape : [],
+    character: ready ? character : '',
+    signLine: ready ? signLine : '',
+    styleLine: ready ? styleLine : '',
+    quizLine: ready ? quizLine : '',
+    note,
+    paragraphs: ready ? shape : [],
+    essay: ready ? profilePageText({
+      shape, traits: blurbs, strengths, gaps, lately: recent, character, signLine, styleLine, quizLine, note, ready: true
+    }) : '',
+    headline: ready ? `${archetype.name} and ${sign.name}` : '',
     signature
   }
 }
@@ -500,7 +547,7 @@ function characterLine(id, dreams) {
     return 'the person who sees a small infestation on a dog\'s bed and gets it out of the room.'
   }
   if (id === 'hero' && /window|escap|jump/.test(text)) {
-    return 'the person who does not stay inside the problem. The sheet goes out the window, or you leave the crash, or you look for a place to jump.'
+    return 'someone who would rather move a problem outside than stay parked in it.'
   }
   if (id === 'explorer') {
     return 'the rider who boards for a short distance and then has to reckon with how far the road actually goes.'
@@ -527,6 +574,22 @@ export function applySnapshot(store, profile, now = new Date()) {
     headline: profile.headline
   }].slice(-24)
   return clean
+}
+
+export function profilePageText(profile) {
+  if (!profile?.ready && !profile?.shape) return ''
+  return [
+    ...(profile.shape || []),
+    ...(profile.traits || []).map((trait) => trait.sentence),
+    ...(profile.strengths || []),
+    ...(profile.gaps || []),
+    profile.lately,
+    profile.character,
+    profile.signLine,
+    profile.styleLine,
+    profile.quizLine,
+    profile.note
+  ].filter(Boolean).join('\n')
 }
 
 export function personalityBundle(dreams, settings) {

@@ -294,7 +294,7 @@ test('journal flow, exports, and mobile screens', async ({ page }) => {
   await expect(page.getByTestId('self-profile')).toBeVisible()
   await expect(page.getByTestId('trait-radar')).toBeVisible()
   await expect(page.getByTestId('archetype-wheel')).toBeVisible()
-  await page.screenshot({ path: path.join(artifacts, 'self.png'), fullPage: true })
+  await page.screenshot({ path: path.join(artifacts, 'self-journal.png'), fullPage: true })
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)
   expect(overflow).toBe(true)
   await page.setViewportSize({ width: 1280, height: 800 })

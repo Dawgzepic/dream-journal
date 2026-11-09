@@ -49,9 +49,16 @@ export function mountSelf(root) {
   function profileHtml(current, source) {
     const history = source.history || []
     return `<section data-testid="self-profile">
-      <section class="card">
+      <section class="card" data-testid="self-shape">
         <h2>The shape of it</h2>
-        ${current.paragraphs.map((paragraph) => `<p>${esc(paragraph)}</p>`).join('')}
+        ${current.shape.map((paragraph) => `<p>${esc(paragraph)}</p>`).join('')}
+      </section>
+      <section class="card">
+        <h2>Dream character</h2>
+        <p>${esc(current.character)}</p>
+        <p>${esc(current.signLine)}</p>
+        <p>${esc(current.styleLine)}</p>
+        ${current.quizLine ? `<p>${esc(current.quizLine)}</p>` : ''}
       </section>
       <section>
         <h2>Traits</h2>

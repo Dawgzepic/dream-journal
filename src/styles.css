@@ -66,7 +66,7 @@ a { color: var(--accent); }
 }
 #app { position: relative; z-index: 1; min-height: 100vh; min-height: 100dvh; }
 #main { width: min(720px, 100%); margin: 0 auto; padding: 22px 20px 32px; }
-body.has-nav #main { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+body.has-nav #main { padding-bottom: calc(148px + env(safe-area-inset-bottom)); }
 
 .page { animation: rise 280ms ease; }
 @keyframes rise {
