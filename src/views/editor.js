@@ -6,7 +6,7 @@ import { PROMPTS } from '../lib/writing-prompts.js'
 import { go } from '../runtime.js'
 import { removeDream, state, suspendLock, upsertDream } from '../state.js'
 import { esc, toast } from '../ui.js'
-import { askVoiceDisclosure, speechSupported, startDictation, voiceErrorText } from '../voice.js'
+import { askVoiceDisclosure, composeDictation, speechSupported, startDictation, voiceErrorText } from '../voice.js'
 
 function chip(label, pressed, testid, extra = '') {
   return `<button type="button" class="chip" aria-pressed="${pressed ? 'true' : 'false'}" data-testid="${esc(testid)}" ${extra}>${esc(label)}</button>`
@@ -295,12 +295,40 @@ export function mountEditor(root, route) {
 
   const voiceBtn = root.querySelector('[data-testid="voice-button"]')
   const voiceLive = root.querySelector('[data-testid="voice-live"]')
+  let voiceAnchor = null
+  let lastVoiceText = ''
+
+  function resetVoiceButton() {
+    stopVoice = null
+    voiceAnchor = null
+    lastVoiceText = ''
+    if (!voiceBtn?.isConnected) return
+    voiceBtn.textContent = 'Voice'
+    voiceBtn.setAttribute('aria-pressed', 'false')
+  }
+
+  function applyVoice(finalText, interim) {
+    if (!voiceAnchor) return
+    const composed = composeDictation({ before: voiceAnchor.before, after: voiceAnchor.after, finalText })
+    if (story.value !== composed.text) {
+      story.value = composed.text
+      story.focus({ preventScroll: true })
+      story.setSelectionRange(composed.cursor, composed.cursor)
+    }
+    working.story = composed.text
+    if (voiceLive) voiceLive.textContent = interim || ''
+    if (composed.text !== lastVoiceText) {
+      lastVoiceText = composed.text
+      schedule()
+    }
+  }
+
   voiceBtn?.addEventListener('click', async () => {
     if (stopVoice) {
-      stopVoice()
-      stopVoice = null
-      voiceBtn.textContent = 'Voice'
-      voiceLive.textContent = ''
+      const stop = stopVoice
+      resetVoiceButton()
+      if (voiceLive) voiceLive.textContent = ''
+      stop()
       return
     }
     if (state.settings.voiceOptIn !== true) {
@@ -314,32 +342,39 @@ export function mountEditor(root, route) {
       }
     }
     suspendLock(120000)
+    const start = story.selectionStart ?? story.value.length
+    const end = story.selectionEnd ?? start
+    voiceAnchor = { before: story.value.slice(0, start), after: story.value.slice(end) }
+    lastVoiceText = story.value
     voiceBtn.textContent = 'Stop voice'
+    voiceBtn.setAttribute('aria-pressed', 'true')
+    if (voiceLive) voiceLive.textContent = ''
     try {
       stopVoice = startDictation({
-        onFinal(text) {
-          const joiner = working.story && !/\s$/.test(working.story) ? ' ' : ''
-          working.story += `${joiner}${text}`
-          story.value = working.story
-          schedule()
+        onUpdate({ finalText, interim }) {
+          applyVoice(finalText, interim)
         },
-        onInterim(text) { voiceLive.textContent = text },
+        onSegment(spoken) {
+          if (!voiceAnchor) return
+          voiceAnchor.before = composeDictation({ before: voiceAnchor.before, after: '', finalText: spoken }).text
+          applyVoice('', '')
+        },
         onError(code) {
-          voiceLive.textContent = voiceErrorText(code)
-          stopVoice = null
-          voiceBtn.textContent = 'Voice'
+          const message = voiceErrorText(code)
+          if (voiceLive) voiceLive.textContent = message
+          const stop = stopVoice
+          resetVoiceButton()
+          stop?.()
         },
         onEnd() {
-          if (stopVoice) {
-            stopVoice = null
-            voiceBtn.textContent = 'Voice'
-            voiceLive.textContent = ''
-          }
+          if (!stopVoice) return
+          resetVoiceButton()
+          if (voiceLive && !voiceLive.textContent) voiceLive.textContent = ''
         }
       })
     } catch {
-      voiceLive.textContent = 'Voice entry is not available in this browser.'
-      voiceBtn.textContent = 'Voice'
+      resetVoiceButton()
+      if (voiceLive) voiceLive.textContent = 'Voice entry is not available in this browser.'
     }
   })
 
