@@ -1,14 +1,7 @@
 import { state } from './state.js'
-import { isQuietHours, isWorkTime, loggedOn, nextAtTime, nextRealityDelay } from './lib/time.js'
+import { loggedOn, nextAtTime } from './lib/time.js'
 
 let timers = []
-
-const CHECKS = [
-  'Look at your hands and count your fingers.',
-  'Read a sentence twice. Did it stay the same?',
-  'Pinch your nose and try to breathe through it.',
-  'Ask how you arrived in this room. Is there a story?'
-]
 
 export function stopReminders() {
   for (const timer of timers) clearTimeout(timer)
@@ -37,17 +30,6 @@ export function startReminders() {
       startReminders()
     }, delay))
   }
-  if (settings.realityReminder !== false) {
-    const delay = nextRealityDelay(new Date(), settings)
-    timers.push(setTimeout(() => {
-      if (!state.unlocked) return
-      const now = new Date()
-      if (!isWorkTime(now, state.settings) && !isQuietHours(now)) {
-        notify('Reality check', CHECKS[now.getDate() % CHECKS.length])
-      }
-      startReminders()
-    }, delay))
-  }
 }
 
 export function homeBanner(settings, dreams, now = new Date()) {
@@ -63,16 +45,9 @@ export function homeBanner(settings, dreams, now = new Date()) {
       note
     }
   }
-  if (settings.realityReminder !== false && !isWorkTime(now, settings) && !isQuietHours(now)) {
-    return {
-      title: 'Reality check',
-      body: CHECKS[now.getDate() % CHECKS.length],
-      note
-    }
-  }
   return {
     title: 'Reminders',
-    body: 'A morning nudge and daytime reality checks stay quiet during your work hours, and overnight from 10:00 PM to 7:00 AM.',
+    body: 'The morning nudge stays quiet overnight from 10:00 PM to 7:00 AM.',
     note
   }
 }

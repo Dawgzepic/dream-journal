@@ -223,8 +223,8 @@ test('journal flow, exports, and mobile screens', async ({ page }) => {
   expect(box.height).toBeGreaterThan(40)
   await page.screenshot({ path: path.join(artifacts, 'patterns.png'), animations: 'disabled' })
 
-  await page.locator('a[href="#/lucid"]').first().click()
-  await expect(page.getByTestId('lucid-count')).toHaveText('1')
+  await expect(page.locator('#nav')).not.toContainText('Lucid')
+  await expect(page.locator('a[href="#/lucid"]')).toHaveCount(0)
 
   await page.locator('a[href="#/settings"]').first().click()
   await expect(page.getByTestId('work-day-0')).toHaveAttribute('aria-pressed', 'true')

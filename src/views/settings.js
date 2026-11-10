@@ -24,22 +24,18 @@ export function mountSettings(root) {
     </section>
     <section>
       <h2>Reminders</h2>
-      <p class="lede">Web reminders are best-effort. Browsers deliver them reliably only while Dream Journal is open, and your phone may delay or drop them. The banner on the home screen is the dependable part. Reality checks never fire during work hours, and they stay quiet overnight from 10:00 PM to 7:00 AM.</p>
+      <p class="lede">Web reminders are best-effort. Browsers deliver them reliably only while Dream Journal is open, and your phone may delay or drop them. The banner on the home screen is the dependable part. The morning nudge stays quiet overnight from 10:00 PM to 7:00 AM.</p>
       <div class="toggle-row">
         <span>Morning reminder to log a dream</span>
         <button type="button" class="chip" data-testid="toggle-morning" aria-pressed="${settings.morningReminder ? 'true' : 'false'}">${settings.morningReminder ? 'On' : 'Off'}</button>
       </div>
       <label class="field"><span>Morning time</span><input type="time" data-testid="morning-time" value="${esc(settings.morningTime)}" /></label>
-      <div class="toggle-row">
-        <span>Daytime reality checks</span>
-        <button type="button" class="chip" data-testid="toggle-reality" aria-pressed="${settings.realityReminder ? 'true' : 'false'}">${settings.realityReminder ? 'On' : 'Off'}</button>
-      </div>
       <button type="button" class="btn secondary" data-testid="notify-permission">Allow notifications</button>
       <p class="fine" data-notify></p>
     </section>
     <section>
       <h2>Work hours</h2>
-      <p>Reality checks will not fire on the days and hours you mark. The default is 8:00 AM to 4:30 PM on Sunday, Monday, Wednesday, Thursday, and Friday.</p>
+      <p>Your usual hours stay on this device. The default is 8:00 AM to 4:30 PM on Sunday, Monday, Wednesday, Thursday, and Friday.</p>
       <div class="chips" data-days>
         ${DAY_LABELS.map((label, index) => `<button type="button" class="chip" data-testid="work-day-${index}" data-day="${index}" aria-pressed="${settings.workDays.includes(index) ? 'true' : 'false'}">${label}</button>`).join('')}
       </div>
@@ -115,13 +111,6 @@ export function mountSettings(root) {
     settings.morningReminder = !settings.morningReminder
     event.currentTarget.setAttribute('aria-pressed', String(settings.morningReminder))
     event.currentTarget.textContent = settings.morningReminder ? 'On' : 'Off'
-    await saveSettings(settings)
-    startReminders()
-  })
-  root.querySelector('[data-testid="toggle-reality"]').addEventListener('click', async (event) => {
-    settings.realityReminder = !settings.realityReminder
-    event.currentTarget.setAttribute('aria-pressed', String(settings.realityReminder))
-    event.currentTarget.textContent = settings.realityReminder ? 'On' : 'Off'
     await saveSettings(settings)
     startReminders()
   })

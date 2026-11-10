@@ -40,7 +40,7 @@ export function mountJournal(root) {
       <input type="search" data-testid="search" placeholder="Search words, moods, labels" autocomplete="off" />
     </label>
     <div class="chips" data-filters>
-      ${['all', 'drafts', 'nightmares', 'lucid', 'recurring'].map((id) => `<button type="button" class="chip" data-filter="${id}" data-testid="filter-${id}">${id === 'all' ? 'All' : id[0].toUpperCase() + id.slice(1)}</button>`).join('')}
+      ${['all', 'drafts', 'nightmares', 'recurring'].map((id) => `<button type="button" class="chip" data-filter="${id}" data-testid="filter-${id}">${id === 'all' ? 'All' : id[0].toUpperCase() + id.slice(1)}</button>`).join('')}
     </div>
     <div data-list></div>
   </div>`
@@ -50,7 +50,6 @@ export function mountJournal(root) {
   function visible(dream, recurring) {
     if (filter === 'drafts' && !dream.isDraft) return false
     if (filter === 'nightmares' && !(dream.tags || []).includes('Nightmare')) return false
-    if (filter === 'lucid' && !(dream.tags || []).includes('Lucid')) return false
     if (filter === 'recurring') {
       const tagged = (dream.tags || []).includes('Recurring')
       if (!tagged && !recurring.has(dream.id)) return false

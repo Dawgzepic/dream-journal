@@ -19,7 +19,6 @@ export function mountHome(root) {
   const now = new Date()
   const own = userDreams(state.dreams)
   const finished = state.dreams.filter((dream) => !dream.isDraft)
-  const lucid = own.filter((dream) => (dream.tags || []).includes('Lucid')).length
   const nightmares = own.filter((dream) => (dream.tags || []).includes('Nightmare')).length
   const summary = summarize(state.dreams)
   const moods = moodTotals(state.dreams).slice(0, 4)
@@ -62,7 +61,6 @@ export function mountHome(root) {
       <div class="stats">
         <div class="stat" data-testid="stat-dreams"><strong>${own.length}</strong><span>Dreams</span></div>
         <div class="stat" data-testid="stat-month"><strong>${thisMonthCount(state.dreams, now)}</strong><span>This month</span></div>
-        <div class="stat" data-testid="stat-lucid"><strong>${lucid}</strong><span>Lucid</span></div>
         <div class="stat" data-testid="stat-nightmare"><strong>${nightmares}</strong><span>Nightmares</span></div>
       </div>
       <a class="btn primary big" href="#/new" data-testid="new-dream">New dream</a>

@@ -341,7 +341,7 @@ caption { text-align: left; color: var(--muted); margin-bottom: 6px; }
   gap: 2px;
   text-decoration: none;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
   padding: 6px 0;
   min-width: 0;
 }

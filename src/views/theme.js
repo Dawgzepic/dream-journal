@@ -1,6 +1,6 @@
 import { saveSettings } from '../db.js'
 import { formatDay } from '../lib/format.js'
-import { GROUPS, hideTheme, listThemes, mergeThemes, pinTheme, renameTheme, themeById, themeNote } from '../lib/themes.js'
+import { GROUPS, hideTheme, listThemes, mergeThemes, pinTheme, renameTheme, themeById, themeCardLines, themeNote } from '../lib/themes.js'
 import { go } from '../runtime.js'
 import { state } from '../state.js'
 import { esc, toast } from '../ui.js'
@@ -19,12 +19,8 @@ export function mountTheme(root, route) {
     <p class="eyebrow">${esc(GROUPS.find(([id]) => id === item.group)?.[1] || 'Theme')}</p>
     <h1 data-testid="theme-title">${esc(item.name)}</h1>
     <p class="lede" data-testid="theme-note">${esc(themeNote(item))}</p>
-    <section class="card">
-      <p>Seen in ${item.count} ${item.count === 1 ? 'dream' : 'dreams'}.</p>
-      <p>First seen ${item.first ? esc(formatDay(item.first)) : 'not yet'}. Last seen ${item.last ? esc(formatDay(item.last)) : 'not yet'}.</p>
-      <p>${item.nightmares ? `${item.nightmares} marked Nightmare.` : 'No Nightmare label on these nights.'}</p>
-      <p>${item.moods.length ? `Moods beside it: ${esc(item.moods.map((row) => `${row.mood} (${row.count})`).join(', '))}.` : 'No mood was written beside it.'}</p>
-      <p>${esc(item.trend)}. ${item.month} this month, ${item.before} before.</p>
+    <section class="card" data-testid="theme-card">
+      ${themeCardLines(item).map((line) => `<p>${esc(line)}</p>`).join('')}
     </section>
     <section>
       <h2>Dreams</h2>

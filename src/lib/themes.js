@@ -1,7 +1,7 @@
 import { findSymbols } from './analyze.js'
 import { phraseIsIdiom } from './analyze.js'
 import { userDreams } from './dreams.js'
-import { monthKeyFromDate, formatDay } from './format.js'
+import { dayKey, monthKeyFromDate, formatDay } from './format.js'
 import { SYMBOLS } from './symbols.js'
 
 export const GROUPS = [
@@ -210,6 +210,10 @@ export function listThemes(dreams, edits, now = new Date()) {
           datetime: dream.datetime,
           nightmare: (dream.tags || []).includes('Nightmare')
         })),
+        roles: dreamsSorted.map((dream) => ({
+          title: dream.title || 'Untitled',
+          clause: clauseFor(dream, row.id)
+        })),
         first: dreamsSorted[0]?.datetime || '',
         last: dreamsSorted[dreamsSorted.length - 1]?.datetime || '',
         moods,
@@ -230,23 +234,108 @@ export function themeById(dreams, edits, id, now = new Date()) {
     || null
 }
 
+function keysFor(id) {
+  const keys = []
+  const symbol = byId.get(id)
+  if (symbol) keys.push(...symbol.keys)
+  for (const extra of EXTRA) {
+    if (extra.id === id) keys.push(...extra.keys)
+  }
+  if (id.startsWith('person:')) keys.push(id.slice(7))
+  if (id.startsWith('mood:')) keys.push(id.slice(5))
+  return [...new Set(keys.map((key) => String(key || '').toLowerCase()).filter(Boolean))]
+    .sort((a, b) => b.length - a.length || a.localeCompare(b))
+}
+
+function findKey(text, keys) {
+  const lower = String(text || '').toLowerCase()
+  for (const key of keys) {
+    let from = 0
+    while (from <= lower.length - key.length) {
+      const index = lower.indexOf(key, from)
+      if (index < 0) break
+      const before = index > 0 ? lower[index - 1] : ''
+      const after = lower[index + key.length] || ''
+      if (!wordChar(before) && !wordChar(after) && !phraseIsIdiom(lower, index, key.length)) {
+        return { index, length: key.length }
+      }
+      from = index + 1
+    }
+  }
+  return null
+}
+
+function sentenceAround(text, index, length) {
+  let start = index
+  let end = index + length
+  while (start > 0 && !/[.!?\n]/.test(text[start - 1])) start -= 1
+  while (end < text.length && !/[.!?\n]/.test(text[end])) end += 1
+  return text.slice(start, end).trim()
+}
+
+function tidyClause(clause) {
+  let text = String(clause || '').replace(/\s+/g, ' ').trim().replace(/[.!?]+$/, '')
+  text = text.replace(/\b[Aa]gain\b/g, ' ')
+  text = text.replace(/\bI'm\b/g, "you're")
+  text = text.replace(/\bI am\b/g, 'you are')
+  text = text.replace(/\bI\b/g, 'you')
+  text = text.replace(/\b[Mm]y\b/g, 'your')
+  text = text.replace(/\b[Mm]e\b/g, 'you')
+  text = text.replace(/\s+,/g, ',').replace(/\s+/g, ' ').replace(/\s+\./g, '.').trim()
+  if (!text) return ''
+  return text.charAt(0).toLowerCase() + text.slice(1)
+}
+
+function clauseFor(dream, id) {
+  const keys = keysFor(id)
+  const story = String(dream.story || '').replace(/\s+/g, ' ').trim()
+  const hit = findKey(story, keys)
+  if (hit) {
+    const clause = tidyClause(sentenceAround(story, hit.index, hit.length))
+    if (clause.split(/\s+/).filter(Boolean).length >= 3) return clause
+  }
+  const notes = [dream.details?.people?.note, dream.details?.reminded?.note, dream.details?.setting?.note, dream.details?.place?.note]
+    .map((note) => String(note || '').trim())
+    .filter((note) => findKey(note, keys))
+  if (notes[0] && story) {
+    const opening = tidyClause(story.split(/(?<=[.!?])\s+/)[0] || story)
+    if (opening) return `${opening}, and you noted ${notes[0]}`
+  }
+  return hit ? tidyClause(sentenceAround(story, hit.index, hit.length)) : ''
+}
+
+export function themeSpan(item) {
+  if (!item?.first || Number.isNaN(new Date(item.first).getTime())) return 'Not dated yet.'
+  const first = formatDay(item.first)
+  const same = dayKey(item.first) === dayKey(item.last)
+  if (same && item.count <= 1) return `On ${first}.`
+  if (same && item.count === 2) return `Both on ${first}.`
+  if (same) return `All on ${first}.`
+  return `From ${first} to ${formatDay(item.last)}.`
+}
+
+export function themeCardLines(item) {
+  const seen = `Seen in ${item.count} ${item.count === 1 ? 'dream' : 'dreams'}.`
+  const nights = item.nightmares
+    ? `${item.nightmares} marked Nightmare.`
+    : 'No Nightmare label on these nights.'
+  const moods = item.moods?.length
+    ? `Moods beside it: ${item.moods.map((row) => `${row.mood} (${row.count})`).join(', ')}.`
+    : 'No mood was written beside it.'
+  return [seen, themeSpan(item), nights, moods, `${item.trend}. ${item.month} this month, ${item.before} before.`]
+}
+
 export function themeNote(item) {
   if (!item) return ''
-  if (item.count < 2) {
-    const title = item.dreams[0]?.title
+  const roles = (item.roles || []).filter((role) => role.clause)
+  if (!roles.length) {
+    const title = item.dreams?.[0]?.title
     return title
-      ? `${item.name} is only in ${title} so far, so there is no pattern yet.`
-      : `${item.name} has not repeated yet.`
+      ? `${item.name} is named in ${title}, and the lines around it do not say what it is doing.`
+      : `${item.name} does not have a scene to describe yet.`
   }
-  const mood = item.moods[0]
-  const feeling = mood ? `The feeling written beside it most often is ${mood.mood}.` : 'No mood was written next to it.'
-  const nights = item.nightmares
-    ? `${item.nightmares} of those ${item.count} dreams are marked Nightmare.`
-    : `None of those ${item.count} dreams are marked Nightmare.`
-  const span = item.first && item.last
-    ? `It runs from ${formatDay(item.first)} to ${formatDay(item.last)}.`
-    : ''
-  return `${item.name} comes back in ${item.count} dreams. ${span} ${feeling} ${nights}`.replace(/\s+/g, ' ').trim()
+  const limit = item.count < 2 ? 1 : Math.min(2, roles.length)
+  return roles.slice(0, limit).map((role) => `In ${role.title}, ${role.clause}.`).join(' ')
 }
 
 export function themesByGroup(items) {

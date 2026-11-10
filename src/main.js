@@ -14,7 +14,6 @@ import { mountEditor } from './views/editor.js'
 import { mountHome } from './views/home.js'
 import { mountJournal } from './views/journal.js'
 import { mountLock } from './views/lock.js'
-import { mountLucid } from './views/lucid.js'
 import { mountMeaning } from './views/meaning.js'
 import { mountPatterns } from './views/patterns.js'
 import { mountSelf } from './views/self.js'
@@ -30,7 +29,6 @@ const titles = {
   details: 'Dream details · Dream Journal',
   patterns: 'Patterns · Dream Journal',
   theme: 'Theme · Dream Journal',
-  lucid: 'Lucid dreaming · Dream Journal',
   self: 'You · Dream Journal',
   settings: 'Settings · Dream Journal'
 }
@@ -59,7 +57,6 @@ function navHtml(name) {
     ['home', '#/home', 'Home', 'moon'],
     ['journal', '#/journal', 'Journal', 'book'],
     ['patterns', '#/patterns', 'Patterns', 'chart'],
-    ['lucid', '#/lucid', 'Lucid', 'eye'],
     ['self', '#/self', 'You', 'you'],
     ['settings', '#/settings', 'Settings', 'sliders']
   ]
@@ -105,7 +102,6 @@ function render() {
       meaning: mountMeaning,
       patterns: mountPatterns,
       theme: mountTheme,
-      lucid: mountLucid,
       self: mountSelf,
       settings: mountSettings
     }
