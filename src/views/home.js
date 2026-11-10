@@ -2,6 +2,7 @@ import { userDreams } from '../lib/dreams.js'
 import { displayTitle } from '../lib/dreams.js'
 import { dayKey, excerpt, hashString } from '../lib/format.js'
 import { moodTotals, summarize, thisMonthCount } from '../lib/analyze.js'
+import { listThemes } from '../lib/themes.js'
 import { noteFor } from '../lib/tips.js'
 import { greeting, streakLabel } from '../lib/time.js'
 import { homeBanner } from '../reminders.js'
@@ -67,6 +68,11 @@ export function mountHome(root) {
       <a class="btn primary big" href="#/new" data-testid="new-dream">New dream</a>
       ${bars}
       <p class="lead" data-testid="home-summary">${esc(summary.lead)}</p>
+      ${(() => {
+        const themes = listThemes(state.dreams, state.settings?.themeEdits).filter((item) => item.count >= 2).slice(0, 4)
+        if (!themes.length) return ''
+        return `<p data-testid="home-themes">Returning: ${themes.map((item) => `<a href="#/theme/${esc(item.id)}">${esc(item.name)}</a>`).join(', ')}</p>`
+      })()}
       <a class="text-link" href="#/patterns">See patterns</a>
     </section>
     ${sample ? '<p class="sample-note" data-testid="sample-note">A sample dream is in the journal, clearly marked. Delete it whenever you like.</p>' : ''}

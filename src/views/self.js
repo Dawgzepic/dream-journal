@@ -2,6 +2,7 @@ import Chart from 'chart.js/auto'
 import { saveSettings } from '../db.js'
 import { formatWhen } from '../lib/format.js'
 import { applySnapshot, buildProfile, cleanPersonality, MIN_DREAMS, QUIZ } from '../lib/personality.js'
+import { listThemes } from '../lib/themes.js'
 import { state } from '../state.js'
 import { esc } from '../ui.js'
 
@@ -37,6 +38,15 @@ export function mountSelf(root) {
     </div>`
     wire(current)
     if (current.ready) drawCharts(current)
+  }
+
+  function themeCard() {
+    const themes = listThemes(state.dreams, state.settings?.themeEdits).slice(0, 6)
+    if (!themes.length) return ''
+    return `<section class="card" data-testid="self-themes">
+      <h2>Themes that return</h2>
+      <p>${themes.map((item) => `<a href="#/theme/${esc(item.id)}">${esc(item.name)}</a>`).join(', ')}</p>
+    </section>`
   }
 
   function progressHtml(current) {
@@ -75,6 +85,7 @@ export function mountSelf(root) {
         <h2>On your mind lately</h2>
         <p>${esc(current.lately || 'Log a few more nights and this will name them.')}</p>
       </section>
+      ${themeCard()}
       <section>
         <h2>Charts</h2>
         <div class="chart-box"><canvas data-testid="trait-radar" aria-label="Trait radar"></canvas></div>

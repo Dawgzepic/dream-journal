@@ -123,6 +123,10 @@ const IDIOMS = [
   'run into'
 ].sort((a, b) => b.length - a.length)
 
+export function phraseIsIdiom(text, index, length) {
+  return insideLongerIdiom(lowerKeep(text), index, length)
+}
+
 function insideLongerIdiom(lower, index, length) {
   const from = Math.max(0, index - 48)
   const slice = lower.slice(from, index + length + 24)

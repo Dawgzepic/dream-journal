@@ -19,6 +19,7 @@ import { mountMeaning } from './views/meaning.js'
 import { mountPatterns } from './views/patterns.js'
 import { mountSelf } from './views/self.js'
 import { mountSettings } from './views/settings.js'
+import { mountTheme } from './views/theme.js'
 
 const titles = {
   home: 'Dream Journal',
@@ -28,6 +29,7 @@ const titles = {
   meaning: 'Meanings · Dream Journal',
   details: 'Dream details · Dream Journal',
   patterns: 'Patterns · Dream Journal',
+  theme: 'Theme · Dream Journal',
   lucid: 'Lucid dreaming · Dream Journal',
   self: 'You · Dream Journal',
   settings: 'Settings · Dream Journal'
@@ -48,6 +50,7 @@ function shell() {
 
 function navKey(name) {
   if (name === 'dream' || name === 'editor' || name === 'meaning' || name === 'details') return 'journal'
+  if (name === 'theme') return 'patterns'
   return name
 }
 
@@ -101,6 +104,7 @@ function render() {
       details: mountDetails,
       meaning: mountMeaning,
       patterns: mountPatterns,
+      theme: mountTheme,
       lucid: mountLucid,
       self: mountSelf,
       settings: mountSettings

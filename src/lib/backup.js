@@ -1,6 +1,7 @@
 import { screenLabel } from './constants.js'
 import { detailSummaryLines } from './details.js'
 import { cleanPersonality, personalityBundle, personalityExport } from './personality.js'
+import { cleanThemeEdits } from './themes.js'
 import { normalizeDream } from './dreams.js'
 import { formatWhen, dayKey } from './format.js'
 
@@ -63,7 +64,8 @@ export function preferencesFrom(settings) {
     realityReminder: settings.realityReminder,
     customMoods: settings.customMoods || [],
     customTags: settings.customTags || [],
-    voiceOptIn: settings.voiceOptIn
+    voiceOptIn: settings.voiceOptIn,
+    themeEdits: cleanThemeEdits(settings.themeEdits)
   }
 }
 
@@ -114,7 +116,8 @@ export function sanitizePrefs(prefs) {
     customMoods: Array.isArray(prefs.customMoods) ? prefs.customMoods.map(String).slice(0, 40) : [],
     customTags: Array.isArray(prefs.customTags) ? prefs.customTags.map(String).slice(0, 40) : [],
     voiceOptIn: prefs.voiceOptIn === true || prefs.voiceOptIn === false ? prefs.voiceOptIn : null,
-    personality: prefs.personality ? cleanPersonality(prefs.personality) : null
+    personality: prefs.personality ? cleanPersonality(prefs.personality) : null,
+    themeEdits: prefs.themeEdits ? cleanThemeEdits(prefs.themeEdits) : null
   }
 }
 
@@ -132,6 +135,7 @@ export function applyPrefs(settings, prefs) {
   if (prefs.customTags) next.customTags = prefs.customTags
   if (prefs.voiceOptIn != null) next.voiceOptIn = prefs.voiceOptIn
   if (prefs.personality) next.personality = cleanPersonality(prefs.personality)
+  if (prefs.themeEdits) next.themeEdits = cleanThemeEdits(prefs.themeEdits)
   return next
 }
 

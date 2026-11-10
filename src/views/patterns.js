@@ -1,5 +1,6 @@
 import Chart from 'chart.js/auto'
-import { bedtimeBuckets, cloudWords, groupWords, isSymbolName, monthOptions, monthRecap, moodTrend, recurringGroups, summarize, symbolCounts } from '../lib/analyze.js'
+import { bedtimeBuckets, groupWords, monthOptions, monthRecap, moodTrend, recurringGroups, summarize } from '../lib/analyze.js'
+import { listThemes, themesByGroup } from '../lib/themes.js'
 import { displayTitle } from '../lib/dreams.js'
 import { monthSelfLine } from '../lib/personality.js'
 import { formatDay, monthLabel } from '../lib/format.js'
@@ -42,10 +43,10 @@ export function mountPatterns(root) {
       </div>
       <div class="card" data-testid="month-recap"></div>
     </section>
-    <section>
-      <h2>Themes and symbols</h2>
-      <div class="chart-box short"><canvas data-testid="symbol-chart" aria-label="Most common symbols"></canvas></div>
-      <div class="cloud" data-testid="word-cloud"></div>
+    <section data-testid="themes-overview">
+      <h2>Themes and keywords</h2>
+      <p class="muted">People, places, things, and themes drawn from the dream and the details you added. Open one to rename it, merge it, hide it, or pin it.</p>
+      <div data-testid="theme-groups"></div>
     </section>
     <section>
       <h2>Recurring dreams</h2>
@@ -101,46 +102,15 @@ export function mountPatterns(root) {
     root.querySelector('[data-testid="mood-chart"]').insertAdjacentHTML('afterend', '<p class="muted">Mood lines appear after you mark a feeling on your own dreams.</p>')
   }
 
-  const symbols = symbolCounts(state.dreams).slice(0, 6)
-  if (symbols.length) {
-    make(root.querySelector('[data-testid="symbol-chart"]'), {
-      type: 'bar',
-      data: {
-        labels: symbols.map((row) => row.symbol.name),
-        datasets: [{
-          label: 'Dreams',
-          data: symbols.map((row) => row.count),
-          backgroundColor: '#cbb6ff',
-          borderRadius: 6
-        }]
-      },
-      options: {
-        indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(214,196,255,0.12)' } },
-          y: { grid: { display: false } }
-        }
-      }
-    })
-  }
-
-  const words = cloudWords(state.dreams)
-  const cloud = root.querySelector('[data-testid="word-cloud"]')
-  if (!words.length) cloud.innerHTML = '<p class="muted">A word cloud will form from the language of your dreams.</p>'
-  else {
-    const counts = words.map(([, count]) => count)
-    const min = Math.min(...counts)
-    const max = Math.max(...counts)
-    cloud.innerHTML = words.map(([word, count]) => {
-      const t = min === max ? 0.45 : (count - min) / (max - min)
-      const size = (0.95 + t * 1.2).toFixed(2)
-      const cls = isSymbolName(word) ? 'cloud-word is-symbol' : 'cloud-word'
-      return `<span class="${cls}" style="font-size:${size}rem">${esc(word)}</span>`
-    }).join('')
-  }
+  const themes = listThemes(state.dreams, state.settings?.themeEdits)
+  const themeGroups = root.querySelector('[data-testid="theme-groups"]')
+  themeGroups.innerHTML = themesByGroup(themes).map((group) => `<section data-testid="theme-group-${group.id}">
+    <h3>${esc(group.label)}</h3>
+    ${group.items.length ? `<ul class="theme-list">${group.items.map((item) => `<li>
+      <a href="#/theme/${esc(item.id)}" data-testid="theme-link">${item.pinned ? '<em class="badge">Pinned</em> ' : ''}${esc(item.name)} <span class="muted">${item.count}</span></a>
+      <span class="fine">${esc(item.trend)}</span>
+    </li>`).join('')}</ul>` : '<p class="muted">None yet.</p>'}
+  </section>`).join('')
 
   const groups = recurringGroups(state.dreams)
   const recurring = root.querySelector('[data-testid="recurring"]')
