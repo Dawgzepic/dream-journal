@@ -34,6 +34,14 @@ export function icon(name) {
   return `<svg ${common}>${paths[name] || ''}</svg>`
 }
 
+export function shardsIcon() {
+  return `<svg class="shards" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="currentColor"><path d="M8.1 2.2 10.5 7.4 6.1 9.1 7.5 14.6z"/><path d="M15.1 3 16.6 7.5 21.2 8.7 18.5 12.6 19.7 17.6 14.2 15.2z"/><path d="M3.6 15.1 7.7 13.9 9.8 18.9 5.1 20z"/></svg>`
+}
+
+export function fragmentsBadge() {
+  return `<em class="badge badge-fragments" data-testid="fragments-badge">${shardsIcon()} Fragments</em>`
+}
+
 export function moonMark() {
   return `<svg class="moon-mark" viewBox="0 0 80 80" width="92" height="92" aria-hidden="true">
     <defs>

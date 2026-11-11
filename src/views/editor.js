@@ -19,6 +19,7 @@ export function mountEditor(root, route) {
     return () => {}
   }
   const working = existing ? structuredClone(existing) : blankDream()
+  working.isFragments = working.isFragments === true
   let wasPublished = Boolean(existing && !existing.isDraft)
   let mode = !existing || wasPublished || hasDetails(existing) ? 'full' : 'quick'
   let dirty = false
@@ -31,6 +32,7 @@ export function mountEditor(root, route) {
     <a class="back" href="${existing ? `#/dream/${esc(existing.id)}` : '#/home'}">Back</a>
     <h1>${existing ? 'Edit dream' : 'New dream'}</h1>
     <p class="lede">You can log more than one dream from the same night.</p>
+    <button type="button" class="chip fragments-toggle" data-testid="fragments-toggle" aria-pressed="false">Fragments — jumbled night</button>
     <div class="len-toggle" data-modes ${wasPublished ? 'hidden' : ''}>
       <button type="button" data-mode="quick" data-testid="mode-quick">Quick jot</button>
       <button type="button" data-mode="full" data-testid="mode-full">Full entry</button>
@@ -129,23 +131,31 @@ export function mountEditor(root, route) {
     root.querySelector('[data-stress]').innerHTML = [1, 2, 3, 4, 5].map((n) => chip(String(n), working.bedtime.stress === n, `stress-${n}`, `data-stress="${n}"`)).join('')
     root.querySelector('[data-screen]').innerHTML = SCREENS.map((item) => chip(item.label, working.bedtime.screen === item.id, `screen-${item.id}`, `data-screen="${item.id}"`)).join('')
   }
+  function storyOptional() {
+    return working.isFragments === true
+  }
   function applyMode() {
-    const quick = mode === 'quick'
+    const quick = mode === 'quick' && !storyOptional()
     for (const el of root.querySelectorAll('[data-full]')) el.hidden = quick
     for (const el of root.querySelectorAll('[data-quick]')) el.hidden = !quick
     root.querySelector('[data-mode="quick"]')?.setAttribute('aria-pressed', String(quick))
     root.querySelector('[data-mode="full"]')?.setAttribute('aria-pressed', String(!quick))
+    root.querySelector('[data-testid="fragments-toggle"]')?.setAttribute('aria-pressed', String(storyOptional()))
     saveJotBtn.hidden = !quick
     saveDreamBtn.hidden = quick
-    story.placeholder = quick
-      ? 'A few words. The stairs, the color, the feeling.'
-      : 'Write it in the present, as if you are still there. Fragments are welcome.'
-    saveDreamBtn.disabled = !working.story.trim()
+    const detailsButton = root.querySelector('[data-testid="open-details"]')
+    if (detailsButton) detailsButton.hidden = storyOptional()
+    story.placeholder = storyOptional()
+      ? 'Optional: anything you caught'
+      : quick
+        ? 'A few words. The stairs, the color, the feeling.'
+        : 'Write it in the present, as if you are still there.'
+    saveDreamBtn.disabled = !storyOptional() && !working.story.trim()
   }
   function schedule() {
     dirty = true
     setError('')
-    saveDreamBtn.disabled = !working.story.trim()
+    saveDreamBtn.disabled = !storyOptional() && !working.story.trim()
     clearTimeout(schedule.timer)
     schedule.timer = setTimeout(() => flush(), 400)
   }
@@ -178,6 +188,12 @@ export function mountEditor(root, route) {
     root.querySelector('[data-voice]').innerHTML = '<button type="button" class="btn secondary" data-testid="voice-button">Voice</button>'
   }
 
+  root.querySelector('[data-testid="fragments-toggle"]').addEventListener('click', () => {
+    working.isFragments = !working.isFragments
+    if (working.isFragments) mode = 'full'
+    applyMode()
+    schedule()
+  })
   root.querySelector('[data-modes]')?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-mode]')
     if (!button) return
@@ -388,6 +404,7 @@ export function mountEditor(root, route) {
   })
   saveJotBtn.addEventListener('click', () => saveJot())
   root.querySelector('[data-testid="open-details"]')?.addEventListener('click', async () => {
+    if (working.isFragments) return
     if (!working.story.trim()) {
       setError('Write a few words first.')
       story.focus()
@@ -402,12 +419,12 @@ export function mountEditor(root, route) {
   })
 
   async function publish() {
-    if (!working.story.trim()) {
+    if (!working.isFragments && !working.story.trim()) {
       setError('Write a few words first, or use quick jot.')
       story.focus()
       return
     }
-    if (!working.title.trim()) working.title = titleFrom(working.story)
+    if (!working.title.trim() && !working.isFragments) working.title = titleFrom(working.story)
     title.value = working.title
     working.datetime = fromLocalInput(when.value)
     const firstPublish = !wasPublished
@@ -416,7 +433,7 @@ export function mountEditor(root, route) {
     dirty = true
     await flush()
     toast('Dream saved')
-    go(firstPublish ? `#/dream/${working.id}/details` : `#/dream/${working.id}`)
+    go(firstPublish && !working.isFragments ? `#/dream/${working.id}/details` : `#/dream/${working.id}`)
   }
   async function saveJot() {
     if (working.story.trim().length < 3) {

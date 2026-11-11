@@ -25,6 +25,7 @@ export function blankDream() {
     details: {},
     isDraft: true,
     isSample: false,
+    isFragments: false,
     createdAt: now,
     updatedAt: now
   }
@@ -32,6 +33,7 @@ export function blankDream() {
 
 export function displayTitle(dream) {
   if (dream.title && dream.title.trim()) return dream.title.trim()
+  if (dream.isFragments) return 'Fragments'
   if (dream.isDraft) return 'Untitled jot'
   return 'Untitled dream'
 }
@@ -44,6 +46,7 @@ export function titleFrom(story) {
 
 export function isBlank(dream) {
   const bed = dream.bedtime || {}
+  if (dream.isFragments) return false
   return !String(dream.title || '').trim()
     && !String(dream.story || '').trim()
     && !(dream.moodsDuring || []).length
@@ -78,7 +81,8 @@ export function normalizeDream(raw) {
   if (!raw || typeof raw !== 'object') return null
   const story = clip(raw.story, 100000)
   const title = clip(raw.title, 200)
-  if (!story.trim() && !title.trim()) return null
+  const isFragments = raw.isFragments === true
+  if (!story.trim() && !title.trim() && !isFragments) return null
   let datetime = typeof raw.datetime === 'string' ? raw.datetime : ''
   if (Number.isNaN(new Date(datetime).getTime())) datetime = new Date().toISOString()
   const stress = Number(raw.bedtime?.stress)
@@ -105,6 +109,7 @@ export function normalizeDream(raw) {
     details: cleanDetails(raw.details),
     isDraft: Boolean(raw.isDraft),
     isSample: Boolean(raw.isSample),
+    isFragments,
     createdAt: typeof raw.createdAt === 'string' ? raw.createdAt : now,
     updatedAt: now
   }

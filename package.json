@@ -9,7 +9,7 @@
     "build": "node scripts/make-icons.mjs && vite build",
     "preview": "vite preview --host 0.0.0.0 --port 8741 --strictPort",
     "test:logic": "node --test tests/logic.test.js",
-    "test": "node --test tests/logic.test.js tests/personality.test.js tests/voice.test.js tests/themes.test.js && playwright test"
+    "test": "node --test tests/logic.test.js tests/personality.test.js tests/voice.test.js tests/themes.test.js tests/fragments.test.js && playwright test"
   },
   "dependencies": {
     "@fontsource-variable/eb-garamond": "^5.2.8",

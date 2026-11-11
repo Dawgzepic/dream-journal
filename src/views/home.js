@@ -7,7 +7,7 @@ import { noteFor } from '../lib/tips.js'
 import { greeting, streakLabel } from '../lib/time.js'
 import { homeBanner } from '../reminders.js'
 import { state } from '../state.js'
-import { esc, icon } from '../ui.js'
+import { esc, fragmentsBadge, icon } from '../ui.js'
 
 function dailyPick(items, now) {
   if (!items.length) return null
@@ -42,6 +42,7 @@ export function mountHome(root) {
         <p class="eyebrow">A page at random</p>
         <h2>${esc(displayTitle(pick))}</h2>
         ${pick.isSample ? '<span class="badge">Sample</span>' : ''}
+        ${pick.isFragments ? fragmentsBadge() : ''}
         <p class="excerpt">${esc(excerpt(pick.story, 220))}</p>
       </a>`
     : `<section class="card" data-testid="random-dream"><p class="eyebrow">A page at random</p><p>Once you have kept a dream, one will surface here.</p></section>`

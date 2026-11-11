@@ -3,7 +3,7 @@ import { displayTitle } from '../lib/dreams.js'
 import { recurringIdSet } from '../lib/analyze.js'
 import { excerpt, formatDay, monthKeyFromDate, monthLabel } from '../lib/format.js'
 import { state } from '../state.js'
-import { esc } from '../ui.js'
+import { esc, fragmentsBadge } from '../ui.js'
 
 function matches(dream, query) {
   if (!query) return true
@@ -20,6 +20,7 @@ function badges(dream, recurring) {
   const out = []
   if (dream.isSample) out.push(['Sample', 'sample'])
   if (dream.isDraft) out.push(['Draft', 'draft'])
+  if (dream.isFragments) out.push(['Fragments', 'fragments'])
   for (const tag of dream.tags || []) out.push([tag, tag === 'Nightmare' ? 'nightmare' : 'tag'])
   if (recurring.has(dream.id) && !(dream.tags || []).includes('Recurring')) out.push(['Likely recurring', 'recur'])
   return out
@@ -85,7 +86,7 @@ export function mountJournal(root) {
         <time datetime="${esc(dream.datetime)}">${esc(formatDay(dream.datetime))}</time>
         <span>
           <strong>${esc(displayTitle(dream))}</strong>
-          <span class="badges">${badges(dream, recurring).map(([label, kind]) => `<em class="badge badge-${esc(kind)}">${esc(label)}</em>`).join('')}</span>
+          <span class="badges">${badges(dream, recurring).map(([label, kind]) => kind === 'fragments' ? fragmentsBadge() : `<em class="badge badge-${esc(kind)}">${esc(label)}</em>`).join('')}</span>
           <span class="excerpt">${esc(excerpt(dream.story || dream.events, 140))}</span>
         </span>
       </a>`).join('')}</div>

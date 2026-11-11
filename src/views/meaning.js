@@ -13,6 +13,15 @@ export function mountMeaning(root, route) {
     root.innerHTML = `<div class="page"><h1>That dream is not here</h1><p><a href="#/journal">Back to the journal</a></p></div>`
     return () => {}
   }
+  if (dream.isFragments) {
+    root.innerHTML = `<div class="page">
+      <a class="back" href="#/dream/${esc(dream.id)}">Back to the dream</a>
+      <h1>Meanings</h1>
+      <p data-testid="fragments-note">A night of fragments — lots of dreaming, little to hold onto.</p>
+      ${dream.story ? `<article class="prose">${esc(dream.story).replaceAll('\n', '<br>')}</article>` : ''}
+    </div>`
+    return () => {}
+  }
   let depth = 'short'
   let highlighted = false
   let notesOpen = false

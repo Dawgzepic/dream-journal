@@ -123,6 +123,7 @@ function addHit(hits, id) {
 
 function hitsFor(dream) {
   const hits = new Set()
+  if (dream.isFragments) return hits
   const text = dreamText(dream)
   for (const range of findSymbols(text)) addHit(hits, range.symbol.id)
   for (const item of EXTRA) {

@@ -1,11 +1,11 @@
 import Chart from 'chart.js/auto'
 import { bedtimeBuckets, groupWords, monthOptions, monthRecap, moodTrend, recurringGroups, summarize } from '../lib/analyze.js'
 import { listThemes, themesByGroup } from '../lib/themes.js'
-import { displayTitle } from '../lib/dreams.js'
+import { displayTitle, userDreams } from '../lib/dreams.js'
 import { monthSelfLine } from '../lib/personality.js'
 import { formatDay, monthLabel } from '../lib/format.js'
 import { state } from '../state.js'
-import { esc } from '../ui.js'
+import { esc, shardsIcon } from '../ui.js'
 
 const MOOD_COLOR = {
   Happy: '#e4d2a4',
@@ -30,6 +30,7 @@ export function mountPatterns(root) {
     <h1>Patterns</h1>
     <p class="lede">Your own dreams only. The sample is left out, and drafts wait until you finish them.</p>
     <section class="card" data-testid="pattern-summary"><p>${esc(summary.detail)}</p></section>
+    <p data-testid="fragments-stat">Fragments nights: ${userDreams(state.dreams).filter((dream) => dream.isFragments).length}</p>
     <section>
       <h2>Mood over time</h2>
       <div class="chart-box"><canvas data-testid="mood-chart" aria-label="Moods by week"></canvas></div>
@@ -157,10 +158,31 @@ export function mountPatterns(root) {
 
   const recap = root.querySelector('[data-testid="month-recap"]')
   const select = root.querySelector('[data-testid="month-select"]')
+  function calendarHtml(key) {
+    const [year, month] = String(key).split('-').map(Number)
+    if (!year || !month) return ''
+    const days = new Date(year, month, 0).getDate()
+    const lead = new Date(year, month - 1, 1).getDay()
+    const marks = new Set()
+    for (const dream of userDreams(state.dreams)) {
+      if (!dream.isFragments) continue
+      const when = new Date(dream.datetime)
+      if (when.getFullYear() === year && when.getMonth() === month - 1) marks.add(when.getDate())
+    }
+    const names = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+    const head = names.map((name) => `<span class="cal-name">${name}</span>`).join('')
+    const blanks = Array.from({ length: lead }, () => '<span></span>').join('')
+    const dates = Array.from({ length: days }, (_, index) => {
+      const day = index + 1
+      const on = marks.has(day)
+      return `<span class="cal-day${on ? ' is-fragments' : ''}" ${on ? 'data-testid="fragments-day"' : ''}>${on ? shardsIcon() : ''}${day}</span>`
+    }).join('')
+    return `<div class="cal" data-testid="fragments-calendar"><div class="cal-grid">${head}${blanks}${dates}</div></div>`
+  }
   function showMonth() {
     const data = monthRecap(state.dreams, select.value)
     const selfLine = monthSelfLine(state.dreams, select.value)
-    recap.innerHTML = `<p>${esc(data.prose)}</p>${selfLine ? `<p data-testid="month-self">${esc(selfLine)}</p>` : ''}${data.titles.length ? `<ul>${data.titles.map((title) => `<li>${esc(title)}</li>`).join('')}</ul>` : ''}`
+    recap.innerHTML = `<p>${esc(data.prose)}</p>${selfLine ? `<p data-testid="month-self">${esc(selfLine)}</p>` : ''}${data.titles.length ? `<ul>${data.titles.map((title) => `<li>${esc(title)}</li>`).join('')}</ul>` : ''}${calendarHtml(select.value)}`
   }
   select.addEventListener('change', showMonth)
   showMonth()

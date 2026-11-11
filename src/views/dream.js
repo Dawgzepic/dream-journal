@@ -5,7 +5,7 @@ import { displayTitle } from '../lib/dreams.js'
 import { formatWhen } from '../lib/format.js'
 import { go } from '../runtime.js'
 import { state } from '../state.js'
-import { confirmModal, esc, toast } from '../ui.js'
+import { confirmModal, esc, fragmentsBadge, toast } from '../ui.js'
 
 export function mountDream(root, route) {
   const dream = state.dreams.find((item) => item.id === route.id)
@@ -25,6 +25,8 @@ export function mountDream(root, route) {
     ${dream.isSample ? '<p class="sample-note" data-testid="sample-banner">This is a sample dream, here so the journal is not empty on the first night. You can delete it.</p>' : ''}
     ${dream.isDraft ? '<p class="sample-note">This is a draft. You can finish it when you are more awake.</p>' : ''}
     <h1 data-testid="dream-title-view">${esc(displayTitle(dream))}</h1>
+    ${dream.isFragments ? fragmentsBadge() : ''}
+    ${dream.isFragments ? '<p data-testid="fragments-note">A night of fragments — lots of dreaming, little to hold onto.</p>' : ''}
     <p class="when">${esc(formatWhen(dream.datetime))}</p>
     <div class="meta">
       ${dream.moodsDuring?.length ? `<p><span>During</span> ${dream.moodsDuring.map(esc).join(', ')}</p>` : ''}
@@ -32,13 +34,13 @@ export function mountDream(root, route) {
       ${dream.clarity ? `<p><span>Memory</span> ${esc(dream.clarity)}</p>` : ''}
       ${dream.tags?.length ? `<p><span>Labels</span> ${dream.tags.map(esc).join(', ')}</p>` : ''}
     </div>
-    <article class="prose">${esc(dream.story || '').replaceAll('\n', '<br>')}</article>
+    ${dream.story ? `<article class="prose" data-testid="dream-story-view">${esc(dream.story).replaceAll('\n', '<br>')}</article>` : ''}
     ${dream.events ? `<section class="card"><h2>Linked to waking life</h2><p>${esc(dream.events)}</p></section>` : ''}
     ${bedBits.length ? `<section class="card"><h2>Before bed</h2><p>${bedBits.map(esc).join('<br>')}</p></section>` : ''}
     ${detailLines.length ? `<section class="card" data-testid="dream-details"><h2>Details</h2><p>${detailLines.map(esc).join('<br>')}</p></section>` : ''}
     <div class="row wrap">
-      <a class="btn primary" href="#/dream/${esc(dream.id)}/meaning" data-testid="open-meaning">Meanings</a>
-      <a class="btn secondary" href="#/dream/${esc(dream.id)}/details" data-testid="add-details">${detailLines.length ? 'Edit details' : 'Add details'}</a>
+      ${dream.isFragments ? '' : `<a class="btn primary" href="#/dream/${esc(dream.id)}/meaning" data-testid="open-meaning">Meanings</a>
+      <a class="btn secondary" href="#/dream/${esc(dream.id)}/details" data-testid="add-details">${detailLines.length ? 'Edit details' : 'Add details'}</a>`}
       <a class="btn secondary" href="#/edit/${esc(dream.id)}">Edit</a>
       <button type="button" class="btn danger" data-testid="delete-dream">Delete</button>
     </div>

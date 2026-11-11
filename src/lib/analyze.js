@@ -232,6 +232,7 @@ function similar(a, b) {
 
 export function recurringGroups(dreams) {
   const items = userDreams(dreams)
+    .filter((dream) => !dream.isFragments)
     .map((dream) => ({ dream, tokens: tokensFor(dream) }))
     .filter((item) => item.tokens.size >= 6)
   const parent = items.map((_, index) => index)
@@ -280,6 +281,7 @@ export function groupWords(dreams) {
 export function symbolCounts(dreams) {
   const counts = new Map()
   for (const dream of userDreams(dreams)) {
+    if (dream.isFragments) continue
     const found = uniqueSymbols(findSymbols(`${dream.title || ''}\n${dream.story || ''}`))
     for (const symbol of found) {
       const prev = counts.get(symbol.id)
@@ -301,6 +303,7 @@ export function moodTotals(dreams) {
 export function cloudWords(dreams) {
   const freq = new Map()
   for (const dream of userDreams(dreams)) {
+    if (dream.isFragments) continue
     for (const word of contentWords(`${dream.title || ''} ${dream.story || ''}`)) {
       freq.set(word, (freq.get(word) || 0) + 1)
     }
@@ -422,6 +425,7 @@ export function monthRecap(dreams, key) {
   const symbols = symbolCounts(own).slice(0, 5)
   const nightmares = own.filter((dream) => (dream.tags || []).includes('Nightmare')).length
   const lucid = own.filter((dream) => (dream.tags || []).includes('Lucid')).length
+  const fragments = own.filter((dream) => dream.isFragments).length
   const label = monthLabel(key)
   let prose
   if (!own.length) {
@@ -429,12 +433,14 @@ export function monthRecap(dreams, key) {
   } else {
     const bits = [`In ${label} you logged ${plural(own.length, 'dream')}.`]
     if (lucid) bits.push(`${plural(lucid, 'dream')} ${lucid === 1 ? 'is' : 'are'} marked Lucid.`)
+    if (fragments) bits.push(`${fragments} ${fragments === 1 ? 'fragments night is' : 'fragments nights are'} in this month.`)
+    if (fragments >= 3) bits.push('Lots of fragments nights lately. Fragmented recall is common, and it is often linked to waking briefly during the night.')
     if (nightmares) bits.push(`${plural(nightmares, 'dream')} ${nightmares === 1 ? 'carries' : 'carry'} the Nightmare label.`)
     if (totals[0]) bits.push(`The mood you noted most was ${totals[0][0]}.`)
     if (symbols.length) bits.push(`Symbols that stood out: ${symbols.map((row) => row.symbol.name.toLowerCase()).join(', ')}.`)
     prose = bits.join(' ')
   }
-  return { count: own.length, nightmares, lucid, prose, titles: own.map((dream) => dream.title || 'Untitled') }
+  return { count: own.length, nightmares, lucid, fragments, prose, titles: own.map((dream) => dream.title || (dream.isFragments ? 'Fragments' : 'Untitled')) }
 }
 
 export function summarize(dreams) {

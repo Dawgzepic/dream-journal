@@ -340,6 +340,7 @@ test('details survive text and json export and an old entry still opens', () => 
   const old = parseBackup(JSON.stringify({ app: 'Dream Journal', version: 1, dreams: [{ id: 'old', title: 'Old night', story: 'I slept.' }] }))
   assert.deepEqual(old.dreams[0].details, {})
   assert.equal(old.dreams[0].title, 'Old night')
+  assert.equal(old.dreams[0].isFragments, false)
   assert.equal(journalToText(old.dreams).includes('Details:'), false)
   const reading = fullInterpretation(dream, 'detailed')
   assert.match(reading, /night/i)

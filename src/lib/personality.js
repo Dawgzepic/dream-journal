@@ -3,6 +3,31 @@ import { userDreams } from './dreams.js'
 import { monthKeyFromDate } from './format.js'
 
 export const MIN_DREAMS = 5
+export const FRAGMENTS_CLUSTER = 'Lots of fragments nights lately. Fragmented recall is common, and it is often linked to waking briefly during the night.'
+
+function scoredDreams(dreams) {
+  return userDreams(dreams).filter((dream) => !dream.isFragments)
+}
+
+function fragmentsRecent(dreams, now) {
+  const start = now.getTime() - 30 * 24 * 60 * 60 * 1000
+  return userDreams(dreams).filter((dream) => {
+    if (!dream.isFragments) return false
+    const when = new Date(dream.datetime).getTime()
+    return !Number.isNaN(when) && when >= start && when <= now.getTime() + 60 * 1000
+  })
+}
+
+export function fragmentsRecallLine(dreams, now = new Date()) {
+  const all = userDreams(dreams).filter((dream) => dream.isFragments)
+  if (!all.length) return ''
+  const recent = fragmentsRecent(dreams, now).length
+  return `${recent} ${recent === 1 ? 'fragments night' : 'fragments nights'} in the last 30 days.`
+}
+
+export function fragmentsClusterLine(dreams, now = new Date()) {
+  return fragmentsRecent(dreams, now).length >= 3 ? FRAGMENTS_CLUSTER : ''
+}
 
 const TRAITS = [
   ['openness', 'Openness'],
@@ -471,8 +496,8 @@ function shapeLines(cards) {
   return lines
 }
 
-export function buildProfile(dreams, store) {
-  const own = userDreams(dreams)
+export function buildProfile(dreams, store, now = new Date()) {
+  const own = scoredDreams(dreams)
   const clean = cleanPersonality(store)
   const dreamPart = dreamTraitLean(own)
   const quiz = quizLean(clean.answers)
@@ -493,7 +518,8 @@ export function buildProfile(dreams, store) {
   const sign = signHits(own)
   const { blurbs, cards, used } = traitBlurbs(traits, own)
   const { strengths, gaps } = strengthsAndGaps(own, cards, used)
-  const shape = shapeLines(cards)
+  const recallCluster = fragmentsClusterLine(dreams, now)
+  const shape = [...shapeLines(cards), ...(recallCluster ? [recallCluster] : [])]
   const recent = latelyLine(own, cards)
   const agreed = QUIZ.filter((question) => clean.answers[question.id] === 'yes').slice(0, 1)
   const character = `The dream character is the ${archetype.name}, ${characterLine(archetype.id, own)}`
@@ -526,6 +552,8 @@ export function buildProfile(dreams, store) {
     strengths,
     gaps,
     lately: recent,
+    recallLine: fragmentsRecallLine(dreams, now),
+    recallCluster,
     shape: ready ? shape : [],
     character: ready ? character : '',
     signLine: ready ? signLine : '',
@@ -614,7 +642,7 @@ export function personalityExport(dreams, settings) {
 }
 
 export function monthSelfLine(dreams, key) {
-  const own = userDreams(dreams).filter((dream) => monthKeyFromDate(dream.datetime) === key)
+  const own = scoredDreams(dreams).filter((dream) => monthKeyFromDate(dream.datetime) === key)
   const bits = own.map(dreamClause).filter(Boolean)
   if (!bits.length) return ''
   return `Personality snapshot: ${bits.slice(0, 3).join(' ')}`

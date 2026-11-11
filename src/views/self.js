@@ -34,6 +34,7 @@ export function mountSelf(root) {
       <p class="lede">A personality sketch from the quiz and from dreams you have logged. It stays on this device.</p>
       <p class="fine" data-testid="self-note">This is a reflection, not a diagnosis, and it does not predict the future.</p>
       ${current.ready ? profileHtml(current, personality) : progressHtml(current)}
+      ${current.ready ? '' : recallCard(current)}
       ${quizHtml(question, answered, skipped)}
     </div>`
     wire(current)
@@ -46,6 +47,14 @@ export function mountSelf(root) {
     return `<section class="card" data-testid="self-themes">
       <h2>Themes that return</h2>
       <p>${themes.map((item) => `<a href="#/theme/${esc(item.id)}">${esc(item.name)}</a>`).join(', ')}</p>
+    </section>`
+  }
+
+  function recallCard(current) {
+    if (!current.recallLine) return ''
+    return `<section class="card" data-testid="dream-recall">
+      <h2>How you dream</h2>
+      <p>${esc(current.recallLine)}</p>
     </section>`
   }
 
@@ -85,6 +94,7 @@ export function mountSelf(root) {
         <h2>On your mind lately</h2>
         <p>${esc(current.lately || 'Log a few more nights and this will name them.')}</p>
       </section>
+      ${recallCard(current)}
       ${themeCard()}
       <section>
         <h2>Charts</h2>

@@ -11,6 +11,14 @@ export function mountDetails(root, route) {
     root.innerHTML = `<div class="page"><h1>That dream is not here</h1><p><a class="text-link" href="#/journal">Back to the journal</a></p></div>`
     return () => {}
   }
+  if (dream.isFragments) {
+    root.innerHTML = `<div class="page">
+      <a class="back" href="#/dream/${esc(dream.id)}">Back to the dream</a>
+      <h1>Dream details</h1>
+      <p data-testid="fragments-note">A night of fragments — lots of dreaming, little to hold onto.</p>
+    </div>`
+    return () => {}
+  }
   const working = structuredClone(dream)
   if (!working.details || typeof working.details !== 'object') working.details = {}
   const questions = selectQuestions(`${working.title || ''}\n${working.story || ''}`)
